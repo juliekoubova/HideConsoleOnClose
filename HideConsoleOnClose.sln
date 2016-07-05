@@ -7,30 +7,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HideConsoleOnClose", "HideC
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Debug-Exe|x64 = Debug-Exe|x64
-		Debug-Exe|x86 = Debug-Exe|x86
+		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
-		Release-Exe|x64 = Release-Exe|x64
-		Release-Exe|x86 = Release-Exe|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x64.ActiveCfg = Debug|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x64.Build.0 = Debug|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x86.ActiveCfg = Debug|Win32
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x86.Build.0 = Debug|Win32
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug-Exe|x64.ActiveCfg = Debug-Exe|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug-Exe|x64.Build.0 = Debug-Exe|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug-Exe|x86.ActiveCfg = Debug-Exe|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x64.ActiveCfg = Release|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x64.Build.0 = Release|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x86.ActiveCfg = Release|Win32
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x86.Build.0 = Release|Win32
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release-Exe|x64.ActiveCfg = Release-Exe|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release-Exe|x64.Build.0 = Release-Exe|x64
-		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release-Exe|x86.ActiveCfg = Release-Exe|x64
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x64.ActiveCfg = Debug-Dll|x64
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|x64.Build.0 = Debug-Dll|x64
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|Win32.ActiveCfg = Debug-Dll|Win32
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Debug|Win32.Build.0 = Debug-Dll|Win32
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x64.ActiveCfg = Release-Dll|x64
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|x64.Build.0 = Release-Dll|x64
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|Win32.ActiveCfg = Release-Dll|Win32
+		{9375C300-3AE2-4E66-84E5-EF36F5281691}.Release|Win32.Build.0 = Release-Dll|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

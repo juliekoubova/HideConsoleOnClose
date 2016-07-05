@@ -5,28 +5,27 @@
       <Configuration>Debug-Exe</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
+    <ProjectConfiguration Include="Debug-Dll|Win32">
+      <Configuration>Debug-Dll</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release-Exe|x64">
       <Configuration>Release-Exe</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Release-Dll|Win32">
+      <Configuration>Release-Dll</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
+    <ProjectConfiguration Include="Debug-Dll|x64">
+      <Configuration>Debug-Dll</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
+    <ProjectConfiguration Include="Release-Dll|x64">
+      <Configuration>Release-Dll</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9375C300-3AE2-4E66-84E5-EF36F5281691}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -36,11 +35,9 @@
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-
   <Choose>
-    <When Condition=" $(Configuration)=='Debug' Or $(Configuration)=='Debug-Exe' ">
+    <When Condition=" $(Configuration.StartsWith('Debug-')) ">
       <PropertyGroup>
         <LinkIncremental>true</LinkIncremental>
         <UseDebugLibraries>true</UseDebugLibraries>
@@ -54,9 +51,8 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-
   <Choose>
-    <When Condition=" $(Configuration) == 'Debug-Exe' Or $(Configuration) == 'Release-Exe' ">
+    <When Condition=" $(Configuration.EndsWith('-Exe')) ">
       <PropertyGroup>
         <ConfigurationType>Application</ConfigurationType>
       </PropertyGroup>
@@ -67,23 +63,19 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-
   <Choose>
     <When Condition=" $(Platform) == 'Win32' ">
       <PropertyGroup>
         <TargetName>$(ProjectName)32</TargetName>
       </PropertyGroup>
     </When>
-
     <When Condition=" $(Platform) == 'x64' ">
       <PropertyGroup>
         <TargetName>$(ProjectName)64</TargetName>
       </PropertyGroup>
     </When>
   </Choose>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -99,8 +91,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;shlwapi.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup Condition=" $(Configuration) == 'Release' Or $(Configuration) == 'Release-Exe' ">
+  <ItemDefinitionGroup Condition=" $(Configuration.StartsWith('Release-')) ">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -112,15 +103,13 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  
-  <ItemDefinitionGroup Condition=" $(Configuration) == 'Debug' Or $(Configuration) == 'Debug-Exe' ">
+  <ItemDefinitionGroup Condition=" $(Configuration.StartsWith('Debug-')) ">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup Condition=" $(Configuration) == 'Debug' Or $(Configuration) == 'Release' ">
+  <ItemDefinitionGroup Condition=" $(Configuration.EndsWith('-Dll')) ">
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -128,45 +117,50 @@
       <EntryPointSymbol>DllMain</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
-
+  <ItemDefinitionGroup Condition=" $(Configuration.EndsWith('-Exe')) ">
+    <Link>
+      <EntryPointSymbol>WinMain</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition=" $(Platform) == 'Win32' ">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Win32' Or '$(Configuration)|$(Platform)' == 'Release|Win32' ">
+  <ItemDefinitionGroup Condition=" $(Configuration.EndsWith('-Dll')) And $(Platform) == 'Win32' ">
     <Link>
       <ModuleDefinitionFile>win32.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' Or '$(Configuration)|$(Platform)' == 'Release|x64' ">
+  <ItemDefinitionGroup Condition=" $(Configuration.EndsWith('-Dll')) And $(Platform) == 'x64' ">
     <Link>
       <ModuleDefinitionFile>win64.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemGroup>
     <ClInclude Include="HideConsoleOnClose.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
-
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="HideConsoleOnClose.c" />
     <ClCompile Include="win32.c" />
     <ClCompile Include="win64.c" />
+    <ClCompile Include="winmain.c" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="win32.def" />
     <None Include="win64.def" />
   </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 
-  <Target Name="AfterBuild">
-    <MSBuild Condition=" '$(Platform)' == 'x64' " Projects="$(MSBuildProjectFile)" Properties="Platform=Win32;PlatFormTarget=Win32" RunEachTargetSeparately="true" />
+  <Target Name="Buildx64Exe" BeforeTargets="Build" Condition=" $(Configuration.EndsWith('-Dll')) And $(Platform) == 'Win32' ">
+    <MSBuild Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64;Configuration=$(Configuration.Replace('-Dll', '-Exe'))" RunEachTargetSeparately="true" />
   </Target>
+
+
+  <Target Name="Buildx64Dll" AfterTargets="Build" Condition=" $(Configuration.EndsWith('-Dll')) And $(Platform) == 'Win32' ">
+    <MSBuild Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
+  </Target>
+
 </Project>

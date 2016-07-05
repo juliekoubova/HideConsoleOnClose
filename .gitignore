@@ -1,5 +1,9 @@
-Debug/
-Release/
+Debug-Dll/
+Debug-Exe/
+Release-Dll/
+Release-Exe/
 x64/
 .vs/
 *.user
+*.sdf
+*.VC.opendb

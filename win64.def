@@ -1,0 +1,4 @@
+LIBRARY HideConsoleOnClose64
+EXPORTS
+	AppletW
+	HideConsoleOnClose

@@ -1,0 +1,3 @@
+LIBRARY HideConsoleOnClose32
+EXPORTS
+	HideConsoleOnClose

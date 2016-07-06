@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+
 #ifdef _DEBUG
 
 void* __cdecl memset(void* dst, int val, size_t size)

@@ -61,9 +61,10 @@
       <PreprocessorDefinitions>HIDE_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
-  <Target Name="Buildx64" BeforeTargets="ResourceCompile" Condition=" $(Platform) == 'Win32' ">
-    <Message Importance="high" Text="Building x64 version for inclusion as a resource in Win32 DLL. $(SolutionPath)" />
-    <MSBuild Projects="$(SolutionPath)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="Buildx64" BeforeTargets="ResourceCompile" Condition=" $(Platform) == 'Win32' ">
+
+    <Message Importance="high" Text="Building x64 version for inclusion as a resource in Win32 DLL." />
+    <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x64 &quot;/p:Configuration=$(Configuration)&quot;" />
+  </Target>
 </Project>

@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="crt.c" />
     <ClCompile Include="hexstr.c" />
   </ItemGroup>
   <ItemGroup>
@@ -32,11 +31,9 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <ProjectName>HideConsoleOnCloseShared</ProjectName>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="..\HideConsoleOnClose.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="..\NoDefaultLibs.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-
 </Project>

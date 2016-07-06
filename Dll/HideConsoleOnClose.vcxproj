@@ -65,6 +65,6 @@
   <Target Name="Buildx64" BeforeTargets="ResourceCompile" Condition=" $(Platform) == 'Win32' ">
 
     <Message Importance="high" Text="Building x64 version for inclusion as a resource in Win32 DLL." />
-    <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x64 &quot;/p:Configuration=$(Configuration)&quot;" />
+    <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x64 &quot;/p:Configuration=$(Configuration)&quot; /v:m /nologo" />
   </Target>
 </Project>

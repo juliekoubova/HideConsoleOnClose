@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma function(memset)
+
 // We need at least Windows 7, that's where conhost.exe was introduced.
 // In previous versions, console windows were owned by the special csrss.exe
 ///process, which isn't possible to hook anyway.

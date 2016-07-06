@@ -133,9 +133,11 @@ BOOL WINAPI LaunchWow64Applet(DWORD ThreadId)
 	if (FileReadHandle == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	STARTUPINFOW StartupInfo = { sizeof(StartupInfo) };
+	STARTUPINFOW StartupInfo;
+	StartupInfo.cb = sizeof(StartupInfo);
+	StartupInfo.dwFlags = 0;
+
 	PROCESS_INFORMATION ProcessInfo;
-	
 	BOOL Success = CreateProcessW(
 		FileName,
 		CommandLine,

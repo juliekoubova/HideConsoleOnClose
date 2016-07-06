@@ -1,4 +1,4 @@
-LIBRARY
+LIBRARY 
 EXPORTS 
 	EnableForThread    @1
 	SetupHideConsole   @2 NONAME

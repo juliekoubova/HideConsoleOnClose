@@ -1,8 +1,9 @@
 #if !defined(_WIN64)
 
-#include "stdafx.h"
+#include "../Shared/stdafx.h"
+#include "../Shared/api.h"
+#include "../Shared/hexstr.h"
 #include "resource.h"
-#include "HideConsoleOnClose.h"
 
 BOOL WINAPI GetTempAppletFileName(LPWSTR Buffer, DWORD BufferCch)
 {

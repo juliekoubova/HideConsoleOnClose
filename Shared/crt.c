@@ -1,5 +1,7 @@
 #include <stddef.h>
 
+#ifdef _DEBUG
+
 void* __cdecl memset(void* dst, int val, size_t size)
 {
 	unsigned char *ptr = dst;
@@ -13,3 +15,5 @@ void* __cdecl memset(void* dst, int val, size_t size)
 
 	return dst;
 }
+
+#endif

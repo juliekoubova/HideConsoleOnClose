@@ -13,22 +13,22 @@
   <ItemGroup>
     <ClCompile Include="exemain.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dll\HideConsoleOnClose.vcxproj">
+      <Project>{9375c300-3ae2-4e66-84e5-ef36f5281691}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Shared\Shared.vcxproj">
+      <Project>{39321a31-1e8e-4d59-a55a-d0ebaefd4a71}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E5119C22-54A4-4B3D-A35B-15A11E240556}</ProjectGuid>
     <ConfigurationType>Application</ConfigurationType>
     <ProjectName>HideConsoleOnCloseWow64Helper</ProjectName>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="..\HideConsoleOnClose.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="..\NoDefaultLibs.props" />
-
-  <ItemDefinitionGroup>
-    <Link>
-      <AdditionalDependencies>HideConsoleOnClose64.lib;HideConsoleOnCloseShared.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

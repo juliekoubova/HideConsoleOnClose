@@ -27,12 +27,4 @@ CleanupHideConsole(PHIDE_CONSOLE HideConsole);
 HIDE_CONSOLE_API
 PHIDE_CONSOLE
 WINAPI
-SetupHideConsole(DWORD ThreadId);
-
-#ifndef _WIN64
-
-BOOL
-WINAPI
-LaunchWow64Applet(DWORD ThreadId);
-
-#endif
+SetupHideConsole(HWND ConsoleWindow);

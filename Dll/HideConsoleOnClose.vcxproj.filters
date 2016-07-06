@@ -5,6 +5,7 @@
     <ClCompile Include="dll.c" />
     <ClCompile Include="hooks.c" />
     <ClCompile Include="wow64.c" />
+    <ClCompile Include="conhost.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />

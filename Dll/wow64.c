@@ -5,24 +5,36 @@
 #include "../Shared/hexstr.h"
 #include "resource.h"
 
-BOOL WINAPI GetTempAppletFileName(LPWSTR Buffer, DWORD BufferCch)
-{
-	if (BufferCch < MAX_PATH)
-		return 0;
+#define X64_DLL_NAME L"HideConsoleOnClose64.dll"
+#define X64_EXE_NAME L"HideConsoleOnCloseWow64Helper.exe"
 
-	WCHAR TempPath[MAX_PATH];
-	DWORD TempPathLength = GetTempPathW(ARRAYSIZE(TempPath), TempPath);
+BOOL WINAPI EnsureTempDirectory(LPWSTR Buffer, DWORD BufferCch)
+{
+	DWORD TempPathLength = GetTempPathW(BufferCch, Buffer);
 
 	if (!TempPathLength)
-		return 0;
+		return FALSE;
 
-	if (TempPathLength >= ARRAYSIZE(TempPath))
-		return 0;
+	if (TempPathLength >= BufferCch)
+		return FALSE;
 
-	return GetTempFileNameW(TempPath, L"hco", 0, Buffer);
+	HRESULT hr = StringCchCatW(
+		Buffer,
+		BufferCch,
+		L"HideConsoleOnClose-1.0\\"
+	);
+
+	if (FAILED(hr))
+		return FALSE;
+
+	if (!CreateDirectoryW(Buffer, NULL))
+		if (GetLastError() != ERROR_ALREADY_EXISTS)
+			return FALSE;
+
+	return TRUE;
 }
 
-BOOL WINAPI WriteAppletToFile(HANDLE FileHandle)
+BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 {
 	BOOL    Success = FALSE;
 	HRSRC   ResourceHandle = NULL;
@@ -32,7 +44,7 @@ BOOL WINAPI WriteAppletToFile(HANDLE FileHandle)
 
 	ResourceHandle = FindResourceW(
 		g_ModuleHandle,
-		MAKEINTRESOURCEW(IDR_X64_EXE),
+		MAKEINTRESOURCEW(ResourceId),
 		RT_RCDATA
 	);
 
@@ -45,7 +57,7 @@ BOOL WINAPI WriteAppletToFile(HANDLE FileHandle)
 	);
 
 	Resource = LoadResource(
-		g_ModuleHandle, 
+		g_ModuleHandle,
 		ResourceHandle
 	);
 
@@ -76,70 +88,121 @@ Cleanup:
 	return Success;
 }
 
-HANDLE WINAPI CreateTempAppletFile(LPWSTR FileName, DWORD FileNameCch)
+BOOL WINAPI CreateTempFile(
+	WORD    ResourceId,
+	LPCWSTR FileName,
+	LPWSTR  FilePath,
+	DWORD   FilePathCch
+)
 {
-	SIZE_T Length = GetTempAppletFileName(
-		FileName, 
-		FileNameCch
+	if (!EnsureTempDirectory(FilePath, FilePathCch))
+		return FALSE;
+
+	HRESULT hr = StringCchCatW(
+		FilePath,
+		FilePathCch,
+		FileName
 	);
 
-	if (!Length)
-		return INVALID_HANDLE_VALUE;
+	if (FAILED(hr))
+		return FALSE;
 
-	HANDLE FileWriteHandle = CreateFileW(
-		FileName,
-		GENERIC_WRITE,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_ALWAYS,
-		FILE_ATTRIBUTE_TEMPORARY,
-		NULL
-	);
+	HANDLE FileWriteHandle = INVALID_HANDLE_VALUE;
+	DWORD  SleepMilliseconds = 100;
+	DWORD  IterationsToGo = 20;
+
+	while (IterationsToGo-- && FileWriteHandle == INVALID_HANDLE_VALUE)
+	{
+		FileWriteHandle = CreateFileW(
+			FilePath,
+			GENERIC_WRITE,
+			0,
+			NULL,
+			OPEN_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL
+		);
+
+		DWORD LastError = GetLastError();
+
+		if (FileWriteHandle == INVALID_HANDLE_VALUE)
+		{
+			if (LastError == ERROR_SHARING_VIOLATION)
+			{
+				Sleep(SleepMilliseconds);
+
+				if (SleepMilliseconds < 6400)
+				{
+					SleepMilliseconds = SleepMilliseconds * 2;
+				}
+			}
+			else
+			{
+				return FALSE;
+			}
+		}
+		else if (LastError == ERROR_ALREADY_EXISTS)
+		{
+			CloseHandle(FileWriteHandle);
+			return TRUE;
+		}
+	} 
 
 	if (FileWriteHandle == INVALID_HANDLE_VALUE)
-		return INVALID_HANDLE_VALUE;
+		return FALSE;
 
-	if (!WriteAppletToFile(FileWriteHandle))
-	{
-		CloseHandle(FileWriteHandle);
-		return INVALID_HANDLE_VALUE;
-	}
+	BOOL Success = WriteRCDataToFile(
+		FileWriteHandle,
+		ResourceId
+	);
 
 	CloseHandle(FileWriteHandle);
-
-	return CreateFileW(
-		FileName,
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-		NULL
-	);
+	return Success;
 }
 
-BOOL WINAPI LaunchWow64Applet(DWORD ThreadId)
+BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 {
+	BOOL  Success;
+	WCHAR FilePath[MAX_PATH];
 	WCHAR CommandLine[32];
-	if (!DWordToHex(ThreadId, CommandLine, ARRAYSIZE(CommandLine)))
-		return FALSE;
-	
-	WCHAR FileName[MAX_PATH];
-	HANDLE FileReadHandle = CreateTempAppletFile(
-		FileName,
-		ARRAYSIZE(FileName)
+
+	Success = CreateTempFile(
+		IDR_X64_DLL,
+		X64_DLL_NAME,
+		FilePath,
+		ARRAYSIZE(FilePath)
 	);
 
-	if (FileReadHandle == INVALID_HANDLE_VALUE)
+	if (!Success)
+		return FALSE;
+
+	Success = CreateTempFile(
+		IDR_X64_EXE,
+		X64_EXE_NAME,
+		FilePath,
+		ARRAYSIZE(FilePath)
+	);
+
+	if (!Success)
+		return FALSE;
+
+	DWORD ConsoleWindowDWord = (DWORD)ConsoleWindow;
+	if (!DWordToHex(ConsoleWindowDWord, CommandLine, ARRAYSIZE(CommandLine)))
 		return FALSE;
 
 	STARTUPINFOW StartupInfo;
 	StartupInfo.cb = sizeof(StartupInfo);
+	StartupInfo.lpReserved = NULL;
+	StartupInfo.lpDesktop = NULL;
+	StartupInfo.lpTitle = NULL;
 	StartupInfo.dwFlags = 0;
+	StartupInfo.cbReserved2 = 0;
+	StartupInfo.lpReserved2 = NULL;
 
 	PROCESS_INFORMATION ProcessInfo;
-	BOOL Success = CreateProcessW(
-		FileName,
+
+	Success = CreateProcessW(
+		FilePath,
 		CommandLine,
 		NULL,
 		NULL,
@@ -151,9 +214,7 @@ BOOL WINAPI LaunchWow64Applet(DWORD ThreadId)
 		&ProcessInfo
 	);
 
-	CloseHandle(FileReadHandle);
-
-	if (Success) 
+	if (Success)
 	{
 		CloseHandle(ProcessInfo.hThread);
 		CloseHandle(ProcessInfo.hProcess);

@@ -5,6 +5,8 @@
 
 HWND g_hConsoleWindowBeingClosed = NULL;
 
+DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow);
+
 BOOL WINAPI IsConsoleWindow(HWND hWnd)
 {
 	WCHAR ClassName[20];
@@ -104,8 +106,13 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole)
 	return HeapFree(GetProcessHeap(), 0, HideConsole);
 }
 
-PHIDE_CONSOLE WINAPI SetupHideConsole(DWORD ThreadId)
+PHIDE_CONSOLE WINAPI SetupHideConsole(HWND ConsoleWindow)
 {
+	DWORD ThreadId = FindConhostUIThreadId(ConsoleWindow);
+
+	if (!ThreadId)
+		return NULL;
+
 	PHIDE_CONSOLE Result = HeapAlloc(
 		GetProcessHeap(),
 		HEAP_ZERO_MEMORY,

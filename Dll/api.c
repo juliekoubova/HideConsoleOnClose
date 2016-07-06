@@ -1,6 +1,14 @@
 #include "../Shared/stdafx.h"
 #include "../Shared/api.h"
 
+#ifndef _WIN64
+
+BOOL
+WINAPI
+LaunchWow64Helper(HWND ConsoleWindow);
+
+#endif
+
 DWORD WINAPI CleanupThreadProc(LPVOID lpParameter)
 {
 	CleanupHideConsole((PHIDE_CONSOLE)lpParameter);
@@ -12,21 +20,24 @@ VOID CALLBACK OnThreadExited(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	QueueUserWorkItem(CleanupThreadProc, lpParameter, WT_EXECUTEDEFAULT);
 }
 
-BOOL WINAPI EnableForThread(DWORD ThreadId)
+BOOL WINAPI EnableForWindow(HWND ConsoleWindow)
 {
+	if (!ConsoleWindow)
+		return FALSE;
+
 #ifndef _WIN64
 
-	BOOL IsWow64 = FALSE;
+	BOOL IsWow64;
 
 	if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
 		return FALSE;
 
 	if (IsWow64)
-		return LaunchWow64Applet(ThreadId);
+		return LaunchWow64Helper(ConsoleWindow);
 
 #endif // ! _WIN64
 
-	PHIDE_CONSOLE HideConsole = SetupHideConsole(ThreadId);
+	PHIDE_CONSOLE HideConsole = SetupHideConsole(ConsoleWindow);
 
 	if (!HideConsole)
 		return FALSE;

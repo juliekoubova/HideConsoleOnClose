@@ -49,23 +49,19 @@ BOOL WINAPI DWordToHex(DWORD Value, LPWSTR Buffer, SIZE_T BufferCch)
 	return TRUE;
 }
 
-BOOL WINAPI HexToDWord(LPCWSTR Buffer, SIZE_T BufferCch, LPDWORD Result)
+BOOL WINAPI HexToDWord(LPCWSTR Buffer, PDWORD Result)
 {
 	if (!Buffer)
-		return FALSE;
-
-	if (!BufferCch)
 		return FALSE;
 
 	if (!*Buffer)
 		return FALSE;
 
-	DWORD Value = 0;
-	DWORD Chars = 0;
+	DWORD  Value = 0;
 
-	while (Chars < BufferCch && Buffer[Chars])
+	while (*Buffer)
 	{
-		WCHAR Ch = Buffer[Chars];
+		WCHAR Ch = *Buffer;
 
 		if (Ch >= L'0' && Ch <= L'9')
 		{
@@ -86,7 +82,7 @@ BOOL WINAPI HexToDWord(LPCWSTR Buffer, SIZE_T BufferCch, LPDWORD Result)
 			return FALSE;
 		}
 
-		Chars++;
+		Buffer++;
 	}
 
 	if (Result)

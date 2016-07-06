@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="api.c" />
+    <ClCompile Include="dll.c" />
+    <ClCompile Include="hooks.c" />
+    <ClCompile Include="wow64.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dll.def" />
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9375C300-3AE2-4E66-84E5-EF36F5281691}</ProjectGuid>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ProjectName>HideConsoleOnClose</ProjectName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" $(Platform) == 'x64' ">
+    <TargetName>$(ProjectName)64</TargetName>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\HideConsoleOnClose.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\NoDefaultLibs.props" />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>HIDE_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>HideConsoleOnCloseShared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>dll.def</ModuleDefinitionFile>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>HIDE_CONSOLE_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <Target Name="Buildx64" BeforeTargets="ResourceCompile" Condition=" $(Platform) == 'Win32' ">
+    <Message Importance="high" Text="Building x64 DLL for inclusion as a resource in Win32 DLL." />
+    <MSBuild Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
+    <Message Importance="high" Text="Building Wow64Helper for inclusion as a resource in Win32 DLL." />
+    <MSBuild Projects="$(SolutionDir)Wow64Helper\Wow64Helper.vcxproj" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true" />
+  </Target>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

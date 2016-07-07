@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>HideConsoleOnClose</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://raw.githubusercontent.com/juliekoubova/HideConsoleOnClose/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/juliekoubova/HideConsoleOnClose</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+  </metadata>
+  <files>
+    <file src="HideConsoleOnClose.targets" target="build\" />
+    <file src="..\$Configuration$\HideConsoleOnClose.dll" target="build\" />
+    <file src="..\x64\$Configuration$\HideConsoleOnClose64.dll" target="build\" />
+  </files>
+</package>

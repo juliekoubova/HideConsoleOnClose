@@ -8,11 +8,11 @@ typedef struct tagFINDING_CONHOST
 	DWORD CurrentThreadId;
 	DWORD Result;
 }
-FINDING_CONHOST;
+FINDING_CONHOST, *PFINDING_CONHOST;
 
 BOOL CALLBACK FindThreadId(HWND hWnd, LPARAM lParam)
 {
-	FINDING_CONHOST *State = (FINDING_CONHOST*)lParam;
+	PFINDING_CONHOST State = (PFINDING_CONHOST)lParam;
 
 	if (hWnd == State->ConsoleWindow)
 	{

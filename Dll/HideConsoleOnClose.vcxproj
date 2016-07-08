@@ -26,6 +26,7 @@
     <ClCompile Include="wow64.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dll.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -11,8 +11,6 @@ typedef struct tagHIDE_CONSOLE
 }
 HIDE_CONSOLE, *PHIDE_CONSOLE;
 
-extern HINSTANCE g_ModuleHandle;
-
 #ifdef HIDE_CONSOLE_DLL
 #  define HIDE_CONSOLE_API
 #else

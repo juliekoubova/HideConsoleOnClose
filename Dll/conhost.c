@@ -1,4 +1,5 @@
 #include "../Shared/stdafx.h"
+#include "../Shared/trace.h"
 #include <TlHelp32.h>
 
 typedef struct tagFINDING_CONHOST
@@ -22,25 +23,38 @@ BOOL CALLBACK FindThreadId(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
-DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow)
+DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 {
+	HideConsoleTrace(L"FindConhostUIThreadId: hWnd=0x%1!p!", hWnd);
+
+	if (!hWnd)
+	{
+		return 0;
+	}
+
 	HANDLE Snapshot = CreateToolhelp32Snapshot(
 		TH32CS_SNAPTHREAD,
 		0
 	);
 
 	if (Snapshot == INVALID_HANDLE_VALUE)
+	{
+		HideConsoleTraceLastError(L"CreateToolhelp32Snapshot");
 		return 0;
+	}
 
 	FINDING_CONHOST State;
-	State.ConsoleWindow = ConsoleWindow;
+	State.ConsoleWindow = hWnd;
 	State.Result = 0;
 
 	THREADENTRY32 ThreadEntry;
 	ThreadEntry.dwSize = sizeof(ThreadEntry);
 
 	if (!Thread32First(Snapshot, &ThreadEntry))
+	{
+		HideConsoleTraceLastError(L"Thread32First");
 		goto Cleanup;
+	}
 
 	do
 	{
@@ -48,6 +62,11 @@ DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow)
 
 		if (State.CurrentThreadId)
 		{
+			HideConsoleTrace(
+				L"FindConhostUIThreadId: EnumThreadWindows ThreadId=%1!u!",
+				State.CurrentThreadId
+			);
+
 			EnumThreadWindows(
 				State.CurrentThreadId,
 				FindThreadId,
@@ -59,6 +78,8 @@ DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow)
 		}
 
 	} while (Thread32Next(Snapshot, &ThreadEntry));
+
+	HideConsoleTrace(L"FindConhostUIThreadId: Result=%1!u!", State.Result);
 
 Cleanup:
 

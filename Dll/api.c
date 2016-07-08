@@ -1,5 +1,6 @@
 #include "../Shared/stdafx.h"
 #include "../Shared/api.h"
+#include "../Shared/trace.h"
 
 #ifndef _WIN64
 
@@ -9,20 +10,29 @@ LaunchWow64Helper(HWND ConsoleWindow);
 
 #endif
 
-DWORD WINAPI CleanupThreadProc(LPVOID lpParameter)
+DWORD WINAPI CleanupWorkItem(LPVOID Parameter)
 {
-	CleanupHideConsole((PHIDE_CONSOLE)lpParameter);
+	HideConsoleTrace(L"CleanupWorkItem");
+	CleanupHideConsole(Parameter);
+
 	return 0;
 }
 
-VOID CALLBACK OnThreadExited(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
+VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 {
-	QueueUserWorkItem(CleanupThreadProc, lpParameter, WT_EXECUTEDEFAULT);
+	HideConsoleTrace(L"OnThreadExited");
+
+	if (!QueueUserWorkItem(CleanupWorkItem, Parameter, WT_EXECUTEDEFAULT))
+	{
+		HideConsoleTraceLastError(L"OnThreadExited: QueueUserWorkItem");
+	}
 }
 
-BOOL WINAPI EnableForWindow(HWND ConsoleWindow)
+BOOL WINAPI EnableForWindow(HWND hWnd)
 {
-	if (!ConsoleWindow)
+	HideConsoleTrace(L"EnableForWindow: hWnd=0x%1!p!", hWnd);
+
+	if (!hWnd)
 		return FALSE;
 
 #ifndef _WIN64
@@ -30,14 +40,20 @@ BOOL WINAPI EnableForWindow(HWND ConsoleWindow)
 	BOOL IsWow64;
 
 	if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
+	{
+		HideConsoleTraceLastError(L"EnableForWindow: IsWow64Process");
 		return FALSE;
+	}
 
 	if (IsWow64)
+	{
+		HideConsoleTrace(L"EnableForWindow: Launching Wow64Helper");
 		return LaunchWow64Helper(ConsoleWindow);
+	}
 
 #endif // ! _WIN64
 
-	PHIDE_CONSOLE HideConsole = SetupHideConsole(ConsoleWindow);
+	PHIDE_CONSOLE HideConsole = SetupHideConsole(hWnd);
 
 	if (!HideConsole)
 		return FALSE;
@@ -52,7 +68,12 @@ BOOL WINAPI EnableForWindow(HWND ConsoleWindow)
 	);
 
 	if (!RegisteredWait)
+	{
+		HideConsoleTraceLastError(
+			L"EnableForWindow: RegisterWaitForSingleObject"
+		);
 		goto Cleanup;
+	}
 
 	return TRUE;
 

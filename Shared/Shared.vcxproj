@@ -19,9 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="trace.c" />
     <ClCompile Include="hexstr.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="trace.h" />
     <ClInclude Include="hexstr.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="stdafx.h" />

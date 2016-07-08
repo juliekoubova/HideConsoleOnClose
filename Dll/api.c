@@ -73,7 +73,7 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 
 	GetModuleHandleExW(
 		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
-		(LPCWSTR)SetupHideConsole,
+		(LPCWSTR)EnableForWindow,
 		&PinnedModuleHandle
 	);
 

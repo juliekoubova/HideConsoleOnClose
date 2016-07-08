@@ -56,7 +56,35 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 	PHIDE_CONSOLE HideConsole = SetupHideConsole(hWnd);
 
 	if (!HideConsole)
+	{
 		return FALSE;
+	}
+
+	// Pin our library in the calling process; we need to keep the OnThreadExited
+	// callback around even if our caller decides to unload us (e.g. AppDomain
+	// unload in CLR), and we can't FreeLibrary() safely from that callback
+	// anyway.
+
+	// Other option would be to use a thread and wait for the ConHost to exit,
+	// but that would be pretty wasteful, given that our caller may realistically 
+	// want to hide 20-30 of console windows.
+
+	HMODULE PinnedModuleHandle;
+
+	GetModuleHandleExW(
+		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+		(LPCWSTR)SetupHideConsole,
+		&PinnedModuleHandle
+	);
+
+	if (!PinnedModuleHandle)
+	{
+		HideConsoleTraceLastError(
+			L"EnableForWindow: GetModuleHandleExW"
+		);
+
+		goto Cleanup;
+	}
 
 	BOOL RegisteredWait = RegisterWaitForSingleObject(
 		&HideConsole->WaitHandle,
@@ -72,6 +100,7 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 		HideConsoleTraceLastError(
 			L"EnableForWindow: RegisterWaitForSingleObject"
 		);
+
 		goto Cleanup;
 	}
 
@@ -80,7 +109,9 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 Cleanup:
 
 	if (HideConsole)
+	{
 		CleanupHideConsole(HideConsole);
+	}
 
 	return FALSE;
 }

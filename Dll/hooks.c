@@ -233,7 +233,10 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->ThreadHandle)
 	{
-		HideConsoleTraceLastError(L"SetupHideConsole: OpenThread");
+		HideConsoleTraceLastError(
+			L"SetupHideConsole: OpenThread"
+		);
+
 		goto Cleanup;
 	}
 

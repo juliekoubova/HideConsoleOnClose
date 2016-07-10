@@ -5,6 +5,8 @@
 
 #define ConsoleWindowClass L"ConsoleWindowClass"
 
+LONG g_HookCount = 0;
+
 DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow);
 
 BOOL WINAPI IsConsoleWindow(HWND hWnd)
@@ -204,7 +206,8 @@ NextHook:
 // Unregisters the wait for conhost's UI thread, unhooks the hooks,
 // and frees the bookkeeping structure.
 //
-// Must not be called from the registered wait callback, would deadlock.
+// Must not be called from the registered wait callback because 
+// UnregisterWaitEx waits for the callback to complete.
 //
 BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 {
@@ -246,7 +249,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	if (HideConsole->GetMessageHook)
 	{
 		if (!UnhookWindowsHookEx(HideConsole->GetMessageHook) &&
-			GetLastError() != ERROR_SUCCESS)
+			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
 				L"CleanupHideConsole: UnhookWindowsHookEx(GetMessageHook)"
@@ -259,7 +262,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	if (HideConsole->WndProcRetHook)
 	{
 		if (!UnhookWindowsHookEx(HideConsole->WndProcRetHook) &&
-			GetLastError() != ERROR_SUCCESS)
+			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
 				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcRetHook)"
@@ -272,7 +275,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	if (HideConsole->WndProcHook)
 	{
 		if (!UnhookWindowsHookEx(HideConsole->WndProcHook) &&
-			GetLastError() != ERROR_SUCCESS)
+			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
 				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcHook)"
@@ -285,7 +288,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	if (HideConsole->CbtHook)
 	{
 		if (!UnhookWindowsHookEx(HideConsole->CbtHook) &&
-			GetLastError() != ERROR_SUCCESS)
+			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
 				L"CleanupHideConsole: UnhookWindowsHookEx(CbtHook)"
@@ -344,7 +347,8 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 	}
 
 	// We've allocated memory and need to cleanup after this point, so let's
-	// increment the global hook count.
+	// increment the global hook count and let CleanupHideConsole decrement it 
+	// again if we fail later on.
 
 	LONG HookCount = InterlockedIncrement(&g_HookCount);
 

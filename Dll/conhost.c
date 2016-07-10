@@ -23,6 +23,13 @@ BOOL CALLBACK FindThreadId(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
+//
+// I'd love to use GetWindowThreadProcessId but that function reports the
+// window as belonging to the console process (e.g. cmd.exe or powershell.exe)
+// instead of the real owner (ie. conhost.exe).
+//
+// Therefore, this hack.
+//
 DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 {
 	HideConsoleTrace(L"FindConhostUIThreadId: hWnd=0x%1!p!", hWnd);

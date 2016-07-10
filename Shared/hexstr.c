@@ -1,17 +1,43 @@
 #include "stdafx.h"
+#include "trace.h"
 
 BOOL WINAPI DWordToHex(DWORD Value, LPWSTR Buffer, SIZE_T BufferCch)
 {
 	if (!Buffer)
+	{
+		HideConsoleTrace(
+			L"DWordToHex: Value=0x%1!x! Buffer=NULL",
+			Value
+		);
+
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return FALSE;
+	}
+
+	HideConsoleTrace(
+		L"DWordToHex: Value=0x%1!x! BufferCch=%2!u!",
+		Value,
+		BufferCch
+	);
 
 	if (BufferCch < 2)
+	{
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return FALSE;
+	}
 
 	if (Value == 0)
 	{
 		Buffer[0] = L'0';
 		Buffer[1] = L'\0';
+
+		HideConsoleTrace(
+			L"DWordToHex: Value=0x%1!x! Buffer='%2'",
+			Value,
+			Buffer
+		);
+
+		SetLastError(ERROR_SUCCESS);
 		return TRUE;
 	}
 
@@ -35,7 +61,14 @@ BOOL WINAPI DWordToHex(DWORD Value, LPWSTR Buffer, SIZE_T BufferCch)
 	}
 
 	if (Value != 0)
+	{
+		HideConsoleTrace(
+			L"DWordToHex: Insufficient buffer"
+		);
+
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return FALSE;
+	}
 
 	Buffer[Chars] = L'\0';
 
@@ -46,18 +79,32 @@ BOOL WINAPI DWordToHex(DWORD Value, LPWSTR Buffer, SIZE_T BufferCch)
 		Buffer[i] = Tmp;
 	}
 
+	HideConsoleTrace(
+		L"DWordToHex: Buffer='%1'",
+		Buffer
+	);
+
+	SetLastError(ERROR_SUCCESS);
 	return TRUE;
 }
 
 BOOL WINAPI HexToDWord(LPCWSTR Buffer, PDWORD Result)
 {
 	if (!Buffer)
+	{
+		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
+	}
+
+	HideConsoleTrace(L"HexToDWord: Buffer='%1'", Buffer);
 
 	if (!*Buffer)
+	{
+		SetLastError(ERROR_INVALID_DATA);
 		return FALSE;
+	}
 
-	DWORD  Value = 0;
+	DWORD Value = 0;
 
 	while (*Buffer)
 	{
@@ -79,14 +126,24 @@ BOOL WINAPI HexToDWord(LPCWSTR Buffer, PDWORD Result)
 		}
 		else
 		{
+			HideConsoleTrace(L"HexToDWord: Invalid Buffer='%1'", Buffer);
+
+			SetLastError(ERROR_INVALID_DATA);
 			return FALSE;
 		}
 
 		Buffer++;
 	}
 
+	HideConsoleTrace(
+		L"HexToDWord: Buffer='%1' Result=0x%2!x!",
+		Buffer,
+		Value
+	);
+
 	if (Result)
 		*Result = Value;
 
+	SetLastError(ERROR_SUCCESS);
 	return TRUE;
 }

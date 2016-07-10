@@ -1,5 +1,3 @@
 LIBRARY 
 EXPORTS 
 	EnableForWindow    @1
-	SetupHideConsole   @2 NONAME
-	CleanupHideConsole @3 NONAME

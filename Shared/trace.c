@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "trace.h"
 
-VOID WINAPIV HideConsoleTraceImpl(LPCWSTR Format, ...)
+VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 {
-#if HIDE_CONSOLE_TRACE
+	DWORD LastError = GetLastError();
+
 	va_list args;
 	va_start(args, Format);
 
@@ -12,7 +13,7 @@ VOID WINAPIV HideConsoleTraceImpl(LPCWSTR Format, ...)
 		FORMAT_MESSAGE_FROM_STRING,
 		Format,
 		0,
-		0,
+		MAKELANGID(LANG_NEUTRAL, LANG_NEUTRAL),
 		Buffer,
 		ARRAYSIZE(Buffer),
 		&args
@@ -28,25 +29,27 @@ VOID WINAPIV HideConsoleTraceImpl(LPCWSTR Format, ...)
 	{
 		OutputDebugStringW(
 			HIDE_CONSOLE_TRACE_PREFIX 
-			L"HideConsoleTraceImpl: FormatMessageW failed"
+			L"HideConsoleTrace: FormatMessageW failed"
 			L"\r\n"
 		);
 	}
-#endif
+
+	SetLastError(LastError);
 }
 
-VOID WINAPI HideConsoleTraceLastErrorImpl(LPCWSTR Message)
+VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 {
-#if HIDE_CONSOLE_TRACE
-
 	DWORD LastError = GetLastError();
 
 	WCHAR Buffer[1024];
+
 	DWORD Cch = FormatMessageW(
-		FORMAT_MESSAGE_FROM_SYSTEM,
+		FORMAT_MESSAGE_FROM_SYSTEM | 
+		FORMAT_MESSAGE_IGNORE_INSERTS |
+		FORMAT_MESSAGE_MAX_WIDTH_MASK,
 		NULL,
-		LastError,
-		0,
+		ErrorCode,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
 		Buffer,
 		ARRAYSIZE(Buffer),
 		NULL
@@ -54,8 +57,8 @@ VOID WINAPI HideConsoleTraceLastErrorImpl(LPCWSTR Message)
 
 	if (Cch)
 	{
-		HideConsoleTraceImpl(
-			HIDE_CONSOLE_TRACE_PREFIX L"%1!s!: %2!s!",
+		ImplHideConsoleTrace(
+			HIDE_CONSOLE_TRACE_PREFIX L"%1: %2\r\n",
 			Message,
 			Buffer
 		);
@@ -64,10 +67,19 @@ VOID WINAPI HideConsoleTraceLastErrorImpl(LPCWSTR Message)
 	{
 		OutputDebugStringW(
 			HIDE_CONSOLE_TRACE_PREFIX 
-			L"HideConsoleTraceLastErrorImpl: FormatMessageW failed"
+			L"HideConsoleTraceLastError: FormatMessageW failed"
 			L"\r\n"
 		);
 	}
 
-#endif
+	SetLastError(LastError);
+}
+
+VOID WINAPI ImplHideConsoleTraceLastError(LPCWSTR Message)
+{
+	DWORD LastError = GetLastError();
+
+	ImplHideConsoleTraceErrorCode(Message, LastError);
+
+	SetLastError(LastError);
 }

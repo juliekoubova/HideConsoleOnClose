@@ -1,23 +1,18 @@
 #pragma once
 #include "stdafx.h"
 
-#ifdef _DEBUG
-#  define HIDE_CONSOLE_TRACE 1
-#else
-#  define HIDE_CONSOLE_TRACE 0
-#endif
-
 #define HIDE_CONSOLE_TRACE_PREFIX L"HideConsoleOnClose: "
 
-VOID WINAPIV HideConsoleTraceImpl(LPCWSTR Format, ...);
-VOID WINAPI  HideConsoleTraceLastErrorImpl(LPCWSTR Message);
+VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...);
+VOID WINAPI  ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode);
+VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 
 #define HideConsoleTrace(msg, ...)                  \
 	do                                              \
 	{                                               \
 		if (HIDE_CONSOLE_TRACE)                     \
 		{                                           \
-			HideConsoleTraceImpl(                   \
+			ImplHideConsoleTrace(                   \
 				HIDE_CONSOLE_TRACE_PREFIX           \
 				msg                                 \
 				L"\r\n",                            \
@@ -26,11 +21,20 @@ VOID WINAPI  HideConsoleTraceLastErrorImpl(LPCWSTR Message);
 		}                                           \
 	} while(0) 
 
+#define HideConsoleTraceErrorCode(msg, err)         \
+	do                                              \
+	{                                               \
+		if (HIDE_CONSOLE_TRACE)                     \
+		{                                           \
+			ImplHideConsoleTraceErrorCode(msg, err);\
+		}                                           \
+	} while(0) 
+
 #define HideConsoleTraceLastError(msg)              \
 	do                                              \
 	{                                               \
 		if (HIDE_CONSOLE_TRACE)                     \
 		{                                           \
-			HideConsoleTraceLastErrorImpl(msg);     \
+			ImplHideConsoleTraceLastError(msg);     \
 		}                                           \
 	} while(0) 

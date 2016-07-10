@@ -7,6 +7,8 @@
 #  define HIDE_CONSOLE_API __declspec(dllimport)
 #endif
 
+#define WM_HIDE_CONSOLE (WM_APP+0)
+
 typedef struct tagHIDE_CONSOLE
 {
 	HHOOK  CbtHook;
@@ -18,8 +20,9 @@ typedef struct tagHIDE_CONSOLE
 }
 HIDE_CONSOLE, *PHIDE_CONSOLE;
 
-HIDE_CONSOLE_API
 BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole);
 
-HIDE_CONSOLE_API
 PHIDE_CONSOLE WINAPI SetupHideConsole(HWND ConsoleWindow);
+
+HIDE_CONSOLE_API
+BOOL WINAPI EnableForWindow(HWND ConsoleWindow);

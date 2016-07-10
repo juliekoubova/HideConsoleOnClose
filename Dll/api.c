@@ -2,13 +2,9 @@
 #include "../Shared/api.h"
 #include "../Shared/trace.h"
 
-#ifndef _WIN64
-
 BOOL
 WINAPI
 LaunchWow64Helper(HWND ConsoleWindow);
-
-#endif
 
 DWORD WINAPI CleanupWorkItem(LPVOID Parameter)
 {
@@ -33,25 +29,27 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 	HideConsoleTrace(L"EnableForWindow: hWnd=0x%1!p!", hWnd);
 
 	if (!hWnd)
-		return FALSE;
-
-#ifndef _WIN64
-
-	BOOL IsWow64;
-
-	if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
 	{
-		HideConsoleTraceLastError(L"EnableForWindow: IsWow64Process");
+		SetLastError(ERROR_SUCCESS);
 		return FALSE;
 	}
 
-	if (IsWow64)
+	if (!HIDE_CONSOLE_WIN64)
 	{
-		HideConsoleTrace(L"EnableForWindow: Launching Wow64Helper");
-		return LaunchWow64Helper(ConsoleWindow);
-	}
+		BOOL IsWow64;
 
-#endif // ! _WIN64
+		if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
+		{
+			HideConsoleTraceLastError(L"EnableForWindow: IsWow64Process");
+			return FALSE;
+		}
+
+		if (IsWow64)
+		{
+			HideConsoleTrace(L"EnableForWindow: Launching Wow64Helper");
+			return LaunchWow64Helper(hWnd);
+		}
+	}
 
 	PHIDE_CONSOLE HideConsole = SetupHideConsole(hWnd);
 
@@ -110,7 +108,11 @@ Cleanup:
 
 	if (HideConsole)
 	{
+		DWORD LastError = GetLastError();
+
 		CleanupHideConsole(HideConsole);
+
+		SetLastError(LastError);
 	}
 
 	return FALSE;

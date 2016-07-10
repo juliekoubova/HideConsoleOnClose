@@ -1,5 +1,17 @@
 #pragma once
 
+#ifdef _DEBUG
+#  define HIDE_CONSOLE_TRACE 1
+#else
+#  define HIDE_CONSOLE_TRACE 0
+#endif
+
+#ifdef _WIN64
+#  define HIDE_CONSOLE_WIN64 1
+#else
+#  define HIDE_CONSOLE_WIN64 0
+#endif
+
 // We need at least Windows 7, that's where conhost.exe was introduced.
 // In previous versions, console windows were owned by the special csrss.exe
 ///process, which isn't possible to hook anyway.
@@ -39,7 +51,6 @@
 #define NOTEXTMETRIC
 #define NOVIRTUALKEYCODES
 #define NOWINOFFSETS
-#define NOWINSTYLES
 #define WIN32_LEAN_AND_MEAN
 
 #undef NOMB
@@ -50,6 +61,7 @@
 #undef NOUSER
 #undef NOWH
 #undef NOWINMESSAGES
+#undef NOWINSTYLES
 #undef OEMRESOURCE
 
 #include <Windows.h>

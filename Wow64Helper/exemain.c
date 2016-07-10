@@ -1,6 +1,28 @@
 #include "../Shared/stdafx.h"
-#include "../Shared/hexstr.h"
 #include "../Shared/api.h"
+#include "../Shared/trace.h"
+
+LRESULT WINAPI MessageWndProc(
+	HWND   Window,
+	UINT   Message,
+	WPARAM wParam,
+	LPARAM lParam
+)
+{
+	if (Message == WM_HIDE_CONSOLE)
+	{
+		HWND ConsoleWindow = wParam;
+
+		HideConsoleTrace(
+			L"WmHideConsole: ConsoleWindow=%1!p!",
+			ConsoleWindow
+		);
+
+		return EnableForWindow(ConsoleWindow);
+	}
+
+	return DefWindowProcW(Window, Message, wParam, lParam);
+}
 
 INT WINAPI wWinMain(
 	HINSTANCE Instance,
@@ -9,43 +31,75 @@ INT WINAPI wWinMain(
 	INT       CommandShow
 )
 {
-#ifdef _DEBUG
-	MessageBoxW(NULL, CommandLine, L"HideConsoleOnClose", 0);
-#endif
-
-	if (*CommandLine == 0)
-		return 1;
-	
-	DWORD ConsoleWindow = 0;
-	
-	if (!HexToDWord(CommandLine, &ConsoleWindow))
-		return 1;
-
-	if (!ConsoleWindow)
-		return 1;
-
-	PHIDE_CONSOLE HideConsole = SetupHideConsole(
-		(HWND)(DWORD_PTR)ConsoleWindow
+	HideConsoleTrace(
+		L"wWinMain: Instance=%1!p!",
+		Instance
 	);
 
-	if (!HideConsole)
+	WNDCLASSEXW WindowClass;
+	WindowClass.cbSize = sizeof(WindowClass);
+	WindowClass.lpszClassName = L"HideConsoleOnCloseWow64Helper";
+	WindowClass.lpfnWndProc = MessageWndProc;
+
+	WindowClass.style = CS_CLASSDC;
+	WindowClass.cbClsExtra = 0;
+	WindowClass.cbWndExtra = 0;
+	WindowClass.hbrBackground = NULL;
+	WindowClass.hCursor = NULL;
+	WindowClass.hInstance = Instance;
+	WindowClass.hIcon = NULL;
+	WindowClass.hIconSm = NULL;
+	WindowClass.lpszMenuName = NULL;
+
+	ATOM WindowClassAtom = RegisterClassExW(&WindowClass);
+
+	if (!WindowClassAtom)
+	{
+		HideConsoleTraceLastError(L"wWinMain: RegisterClassExW");
 		return 1;
+	}
 
-	WaitForSingleObject(HideConsole->ThreadHandle, INFINITE);
+	HWND MessageWindow = CreateWindowExW(
+		0,
+		WindowClassAtom,
+		NULL,
+		WS_OVERLAPPED,
+		0, 0, 0, 0,
+		HWND_MESSAGE,
+		NULL,
+		Instance,
+		NULL
+	);
 
-	CleanupHideConsole(HideConsole);
+	if (!MessageWindow)
+	{
+		HideConsoleTraceLastError(L"wWinMain: CreateWindowExW");
+		return 1;
+}
+
+	MSG  Message;
+	BOOL Result;
+
+	while ((Result = GetMessageW(&Message, NULL, 0, 0)))
+	{
+		if (Result == -1)
+		{
+			HideConsoleTraceLastError("wWinMain: GetMessageW");
+			return 1;
+		}
+
+		DispatchMessageW(&Message);
+	}
 
 	return 0;
 }
 
 INT WINAPI wWinMainCRTStartup(VOID)
 {
-	LPWSTR CommandLine = GetCommandLineW();
-
 	INT ExitCode = wWinMain(
+		GetModuleHandleW(NULL),
 		NULL,
 		NULL,
-		GetCommandLineW(),
 		0
 	);
 

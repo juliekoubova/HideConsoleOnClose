@@ -327,7 +327,8 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 	if (!ThreadId)
 	{
 		HideConsoleTrace(
-			L"SetupHideConsole: Thread for hWnd 0x%1!p! could not be found",
+			L"SetupHideConsole: Conhost UI thread for hWnd 0x%1!p! "
+			L"could not be found",
 			hWnd
 		);
 

@@ -11,10 +11,10 @@ $HideConsoleOnClose = Add-Type `
 
 		[DllImport("$DllName")]
 		public static extern Boolean EnableForWindow(IntPtr hwnd);
-
-		[DllImport("kernel32")]
-		public static extern IntPtr GetConsoleWindow();
 "@
 
-$ConsoleWindow = $HideConsoleOnClose::GetConsoleWindow()
-$HideConsoleOnClose::EnableForWindow($ConsoleWindow)
+$Process = [Diagnostics.Process]::Start('cmd.exe')
+
+Start-Sleep -Milliseconds 500
+
+$HideConsoleOnClose::EnableForWindow($Process.MainWindowHandle)

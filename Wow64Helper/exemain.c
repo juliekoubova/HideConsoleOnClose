@@ -11,7 +11,7 @@ LRESULT WINAPI MessageWndProc(
 {
 	if (Message == WM_HIDE_CONSOLE)
 	{
-		HWND ConsoleWindow = wParam;
+		HWND ConsoleWindow = (HWND)wParam;
 
 		HideConsoleTrace(
 			L"WmHideConsole: ConsoleWindow=%1!p!",
@@ -61,7 +61,7 @@ INT WINAPI wWinMain(
 
 	HWND MessageWindow = CreateWindowExW(
 		0,
-		WindowClassAtom,
+		(LPCWSTR)WindowClassAtom,
 		NULL,
 		WS_OVERLAPPED,
 		0, 0, 0, 0,
@@ -84,7 +84,7 @@ INT WINAPI wWinMain(
 	{
 		if (Result == -1)
 		{
-			HideConsoleTraceLastError("wWinMain: GetMessageW");
+			HideConsoleTraceLastError(L"wWinMain: GetMessageW");
 			return 1;
 		}
 

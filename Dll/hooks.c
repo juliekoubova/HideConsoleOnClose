@@ -199,44 +199,112 @@ NextHook:
 	return CallNextHookEx(NULL, Code, wParam, lParam);
 
 }
-BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole)
+
+//
+// Unregisters the wait for conhost's UI thread, unhooks the hooks,
+// and frees the bookkeeping structure.
+//
+// Must not be called from the registered wait callback, would deadlock.
+//
+BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 {
 	HideConsoleTrace(
-		L"CleanupHideConsole: HideConsole=%1!p!",
-		HideConsole
+		L"CleanupHideConsole: HideConsole=%1!p! WasLastHook=%2!p!",
+		HideConsole,
+		WasLastHook
 	);
 
 	if (!HideConsole)
 		return FALSE;
 
-	if (HideConsole->WaitHandle)
-	{
-		HideConsoleTrace(
-			L"CleanupHideConsole: UnregisterWaitEx (blocking)"
-		);
+	LONG HookCount = InterlockedDecrement(&g_HookCount);
 
-		UnregisterWaitEx(
-			HideConsole->WaitHandle,
-			INVALID_HANDLE_VALUE // block until the wait is unregistered
-		);
+	HideConsoleTrace(
+		L"CleanupHideConsole: HookCount=%1!i!",
+		HookCount
+	);
+
+	if (WasLastHook)
+	{
+		*WasLastHook = (HookCount == 0) ? TRUE : FALSE;
 	}
 
-	if (HideConsole->ThreadHandle)
-		CloseHandle(HideConsole->ThreadHandle);
+	BOOL Result = TRUE;
+
+	if (HideConsole->ConhostThreadHandle)
+	{
+		if (!CloseHandle(HideConsole->ConhostThreadHandle))
+		{
+			HideConsoleTraceLastError(
+				L"CleanupHideConsole: CloseHandle"
+			);
+
+			Result = FALSE;
+		}
+	}
 
 	if (HideConsole->GetMessageHook)
-		UnhookWindowsHookEx(HideConsole->GetMessageHook);
+	{
+		if (!UnhookWindowsHookEx(HideConsole->GetMessageHook) &&
+			GetLastError() != ERROR_SUCCESS)
+		{
+			HideConsoleTraceLastError(
+				L"CleanupHideConsole: UnhookWindowsHookEx(GetMessageHook)"
+			);
+
+			Result = FALSE;
+		}
+	}
 
 	if (HideConsole->WndProcRetHook)
-		UnhookWindowsHookEx(HideConsole->WndProcRetHook);
+	{
+		if (!UnhookWindowsHookEx(HideConsole->WndProcRetHook) &&
+			GetLastError() != ERROR_SUCCESS)
+		{
+			HideConsoleTraceLastError(
+				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcRetHook)"
+			);
+
+			Result = FALSE;
+		}
+	}
 
 	if (HideConsole->WndProcHook)
-		UnhookWindowsHookEx(HideConsole->WndProcHook);
+	{
+		if (!UnhookWindowsHookEx(HideConsole->WndProcHook) &&
+			GetLastError() != ERROR_SUCCESS)
+		{
+			HideConsoleTraceLastError(
+				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcHook)"
+			);
+
+			Result = FALSE;
+		}
+	}
 
 	if (HideConsole->CbtHook)
-		UnhookWindowsHookEx(HideConsole->CbtHook);
+	{
+		if (!UnhookWindowsHookEx(HideConsole->CbtHook) &&
+			GetLastError() != ERROR_SUCCESS)
+		{
+			HideConsoleTraceLastError(
+				L"CleanupHideConsole: UnhookWindowsHookEx(CbtHook)"
+			);
 
-	return HeapFree(GetProcessHeap(), 0, HideConsole);
+			Result = FALSE;
+		}
+	}
+
+	if (!HeapFree(GetProcessHeap(), 0, HideConsole))
+	{
+		HideConsoleTraceLastError(
+			L"CleanupHideConsole: HeapFree"
+		);
+
+		Result = FALSE;
+	}
+
+	return Result;
 }
 
 PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
@@ -275,9 +343,19 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 		return NULL;
 	}
 
-	Result->ThreadHandle = OpenThread(SYNCHRONIZE, FALSE, ThreadId);
+	// We've allocated memory and need to cleanup after this point, so let's
+	// increment the global hook count.
 
-	if (!Result->ThreadHandle)
+	LONG HookCount = InterlockedIncrement(&g_HookCount);
+
+	HideConsoleTrace(
+		L"SetupHideConsole: HookCount=%1!i!",
+		HookCount
+	);
+
+	Result->ConhostThreadHandle = OpenThread(SYNCHRONIZE, FALSE, ThreadId);
+
+	if (!Result->ConhostThreadHandle)
 	{
 		HideConsoleTraceLastError(
 			L"SetupHideConsole: OpenThread"
@@ -354,6 +432,6 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 Cleanup:
 
-	CleanupHideConsole(Result);
+	CleanupHideConsole(Result, NULL);
 	return NULL;
 }

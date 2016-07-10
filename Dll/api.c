@@ -6,21 +6,67 @@ BOOL
 WINAPI
 LaunchWow64Helper(HWND ConsoleWindow);
 
-DWORD WINAPI CleanupWorkItem(LPVOID Parameter)
+VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 {
-	HideConsoleTrace(L"CleanupWorkItem");
-	CleanupHideConsole(Parameter);
+	HideConsoleTrace(L"CleanupCallback");
 
-	return 0;
+	PHIDE_CONSOLE HideConsole = Context;
+
+	if (HideConsole->OurModuleHandle)
+	{
+		HideConsoleTrace(
+			L"CleanupCallback: FreeLibraryWhenCallbackReturns "
+			L"OurModuleHandle=%1!p!",
+			HideConsole->OurModuleHandle
+		);
+
+		FreeLibraryWhenCallbackReturns(
+			Instance,
+			HideConsole->OurModuleHandle
+		);
+	}
+
+	if (HideConsole->ConhostWaitHandle)
+	{
+		HideConsoleTrace(
+			L"CleanupCallback: UnregisterWaitEx (blocking)"
+		);
+
+		BOOL WaitUnregistered = UnregisterWaitEx(
+			HideConsole->ConhostWaitHandle,
+			INVALID_HANDLE_VALUE // block until the wait is unregistered
+		);
+
+		if (!WaitUnregistered)
+		{
+			HideConsoleTraceLastError(
+				L"CleanupCallback: UnregisterWaitEx"
+			);
+		}
+	}
+
+	CleanupHideConsole(HideConsole, NULL);
 }
 
 VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 {
 	HideConsoleTrace(L"OnThreadExited");
 
-	if (!QueueUserWorkItem(CleanupWorkItem, Parameter, WT_EXECUTEDEFAULT))
+	// Need to delegate the cleanup to another thread pool work item, because
+	// 1) UnregisterWaitEx waits for the wait callback to complete, and 
+	// 2) we need TP_CALLBACK_INSTANCE to FreeLibraryWhenCallbackReturns.
+
+	BOOL Success = TrySubmitThreadpoolCallback(
+		CleanupCallback,
+		Parameter,
+		NULL
+	);
+
+	if (!Success)
 	{
-		HideConsoleTraceLastError(L"OnThreadExited: QueueUserWorkItem");
+		HideConsoleTraceLastError(
+			L"OnThreadExited: TrySubmitThreadpoolCallback"
+		);
 	}
 }
 
@@ -58,24 +104,13 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 		return FALSE;
 	}
 
-	// Pin our library in the calling process; we need to keep the OnThreadExited
-	// callback around even if our caller decides to unload us (e.g. AppDomain
-	// unload in CLR), and we can't FreeLibrary() safely from that callback
-	// anyway.
-
-	// Other option would be to use a thread and wait for the ConHost to exit,
-	// but that would be pretty wasteful, given that our caller may realistically 
-	// want to hide 20-30 of console windows.
-
-	HMODULE PinnedModuleHandle;
-
-	GetModuleHandleExW(
-		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+	BOOL AddedModuleRef = GetModuleHandleExW(
+		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
 		(LPCWSTR)EnableForWindow,
-		&PinnedModuleHandle
+		&HideConsole->OurModuleHandle
 	);
 
-	if (!PinnedModuleHandle)
+	if (!AddedModuleRef)
 	{
 		HideConsoleTraceLastError(
 			L"EnableForWindow: GetModuleHandleExW"
@@ -85,8 +120,8 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 	}
 
 	BOOL RegisteredWait = RegisterWaitForSingleObject(
-		&HideConsole->WaitHandle,
-		HideConsole->ThreadHandle,
+		&HideConsole->ConhostWaitHandle,
+		HideConsole->ConhostThreadHandle,
 		OnThreadExited,
 		HideConsole,
 		INFINITE,
@@ -110,7 +145,19 @@ Cleanup:
 	{
 		DWORD LastError = GetLastError();
 
-		CleanupHideConsole(HideConsole);
+		if (HideConsole->OurModuleHandle)
+		{
+			HideConsoleTrace(
+				L"EnableForWindow: Freeing our additional module handle"
+			);
+
+			if (!FreeLibrary(HideConsole->OurModuleHandle))
+			{
+				HideConsoleTraceLastError(L"EnableForWindow: FreeLibrary");
+			}
+		}
+
+		CleanupHideConsole(HideConsole, NULL);
 
 		SetLastError(LastError);
 	}

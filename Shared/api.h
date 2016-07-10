@@ -11,16 +11,19 @@
 
 typedef struct tagHIDE_CONSOLE
 {
-	HHOOK  CbtHook;
-	HHOOK  GetMessageHook;
-	HHOOK  WndProcHook;
-	HHOOK  WndProcRetHook;
-	HANDLE WaitHandle;
-	HANDLE ThreadHandle;
+	HHOOK   CbtHook;
+	HHOOK   GetMessageHook;
+	HHOOK   WndProcHook;
+	HHOOK   WndProcRetHook;
+
+	HANDLE  ConhostThreadHandle;
+	HANDLE  ConhostWaitHandle;
+
+	HMODULE OurModuleHandle;
 }
 HIDE_CONSOLE, *PHIDE_CONSOLE;
 
-BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole);
+BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook);
 
 PHIDE_CONSOLE WINAPI SetupHideConsole(HWND ConsoleWindow);
 

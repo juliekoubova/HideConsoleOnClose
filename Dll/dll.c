@@ -1,12 +1,13 @@
 #include "../Shared/stdafx.h"
 #include "dll.h"
 
+LONG    g_HookCount = 0;
 HMODULE g_ModuleHandle = NULL;
-DWORD   g_TlsIndex     = TLS_OUT_OF_INDEXES;
+DWORD   g_TlsIndex = TLS_OUT_OF_INDEXES;
 
 BOOL WINAPI _DllMainCRTStartup(HMODULE hModule, DWORD Reason, LPVOID IsStatic)
 {
-	if (Reason == DLL_PROCESS_ATTACH) 
+	if (Reason == DLL_PROCESS_ATTACH)
 	{
 		g_ModuleHandle = hModule;
 		g_TlsIndex = TlsAlloc();

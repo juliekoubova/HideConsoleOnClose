@@ -56,26 +56,24 @@ LRESULT WINAPI MessageWndProc(
 
 HWND WINAPI CreateMessageWindow(HINSTANCE Instance)
 {
-	WNDCLASSEXW WindowClass;
-	WindowClass.cbSize = sizeof(WindowClass);
-	WindowClass.lpszClassName = WOW64HELPER_WINDOW_CLASS;
+	WNDCLASSW WindowClass;
 	WindowClass.lpfnWndProc = MessageWndProc;
-
+	WindowClass.lpszClassName = WOW64HELPER_WINDOW_CLASS;
 	WindowClass.style = CS_CLASSDC;
+
 	WindowClass.cbClsExtra = 0;
 	WindowClass.cbWndExtra = 0;
 	WindowClass.hbrBackground = NULL;
 	WindowClass.hCursor = NULL;
 	WindowClass.hInstance = Instance;
 	WindowClass.hIcon = NULL;
-	WindowClass.hIconSm = NULL;
 	WindowClass.lpszMenuName = NULL;
 
-	ATOM WindowClassAtom = RegisterClassExW(&WindowClass);
+	ATOM WindowClassAtom = RegisterClassW(&WindowClass);
 
 	if (!WindowClassAtom)
 	{
-		HideConsoleTraceLastError(L"RegisterClassExW");
+		HideConsoleTraceLastError(L"RegisterClassW");
 		return NULL;
 	}
 
@@ -106,16 +104,9 @@ INT WINAPI wWinMain(
 	INT       CommandShow
 )
 {
-	HideConsoleTrace(
-		L"Instance=%1!p!",
-		Instance
-	);
+	HideConsoleTrace(L"Instance=%1!p!", Instance);
 
-	HideConsoleTrace(
-		L"CreateMutexW Name='"
-		WOW64HELPER_MUTEX
-		L"'"
-	);
+	HideConsoleTrace(L"CreateMutexW Name='" WOW64HELPER_MUTEX L"'");
 
 	HANDLE MutexHandle = CreateMutexW(
 		/* lpMutexAttributes */ NULL,
@@ -155,11 +146,7 @@ INT WINAPI wWinMain(
 		);
 	}
 
-	HideConsoleTrace(
-		L"CreateEventW Name='"
-		WOW64HELPER_READY_EVENT
-		L"'"
-	);
+	HideConsoleTrace(L"CreateEventW Name='" WOW64HELPER_READY_EVENT L"'");
 
 	g_ReceivingMessagesEventHandle = CreateEventW(
 		/* lpEventAttributes */ NULL,

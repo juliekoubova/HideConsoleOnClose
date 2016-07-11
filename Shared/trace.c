@@ -75,6 +75,79 @@ VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 	SetLastError(LastError);
 }
 
+VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
+{
+	FILETIME LocalFileTime;
+
+	if (!FileTimeToLocalFileTime(FileTime, &LocalFileTime))
+	{
+		HideConsoleTraceLastError(
+			L"HideConsoleTraceFileTime: FileTimeToLocalFileTime"
+		);
+
+		return;
+	}
+
+	SYSTEMTIME SystemTime;
+
+	if (!FileTimeToSystemTime(&LocalFileTime, &SystemTime))
+	{
+		HideConsoleTraceLastError(
+			L"HideConsoleTraceFileTime: FileTimeToSystemTime"
+		);
+
+		return;
+	}
+
+	WCHAR DateString[256];
+
+	DWORD DateStringCch = GetDateFormatEx(
+		LOCALE_NAME_INVARIANT,
+		DATE_SHORTDATE,
+		&SystemTime,
+		NULL,
+		DateString,
+		ARRAYSIZE(DateString),
+		NULL
+	);
+
+	if (!DateStringCch)
+	{
+		HideConsoleTraceLastError(
+			L"HideConsoleTraceFileTime: GetDateFormatEx"
+		);
+
+		return;
+	}
+
+	WCHAR TimeString[256];
+
+	DWORD TimeStringCch = GetTimeFormatEx(
+		LOCALE_NAME_INVARIANT,
+		TIME_FORCE24HOURFORMAT,
+		&SystemTime,
+		NULL,
+		TimeString,
+		ARRAYSIZE(TimeString)
+	);
+
+	if (!TimeStringCch)
+	{
+		HideConsoleTraceLastError(
+			L"HideConsoleTraceFileTime: GetTimeFormatEx"
+		);
+
+		return;
+	}
+
+	ImplHideConsoleTrace(
+		HIDE_CONSOLE_TRACE_PREFIX L"%1: %2 %3\r\n",
+		Message,
+		DateString,
+		TimeString
+	);
+}
+
 VOID WINAPI ImplHideConsoleTraceLastError(LPCWSTR Message)
 {
 	DWORD LastError = GetLastError();

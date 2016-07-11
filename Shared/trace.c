@@ -3,6 +3,8 @@
 
 VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 {
+	if (!HIDE_CONSOLE_TRACE) return;
+
 	DWORD LastError = GetLastError();
 
 	va_list args;
@@ -39,6 +41,8 @@ VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 
 VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 {
+	if (!HIDE_CONSOLE_TRACE) return;
+
 	DWORD LastError = GetLastError();
 
 	WCHAR Buffer[1024];
@@ -73,6 +77,8 @@ VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 
 VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 {
+	if (!HIDE_CONSOLE_TRACE) return;
+
 	FILETIME LocalFileTime;
 
 	if (!FileTimeToLocalFileTime(FileTime, &LocalFileTime))
@@ -134,6 +140,8 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 VOID WINAPI ImplHideConsoleTraceLastError(LPCWSTR Message)
 {
+	if (!HIDE_CONSOLE_TRACE) return;
+
 	DWORD LastError = GetLastError();
 
 	ImplHideConsoleTraceErrorCode(Message, LastError);

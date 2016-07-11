@@ -1,6 +1,5 @@
 #include "../Shared/stdafx.h"
 #include "../Shared/api.h"
-#include "../Shared/hexstr.h"
 #include "../Shared/trace.h"
 #include "dll.h"
 #include "resource.h"

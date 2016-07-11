@@ -1,11 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
   <ItemGroup>
-    <ClCompile Include="hexstr.c" />
     <ClCompile Include="trace.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="hexstr.h" />
     <ClInclude Include="api.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="trace.h" />

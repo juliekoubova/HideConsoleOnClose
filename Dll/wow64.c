@@ -279,6 +279,12 @@ BOOL WINAPI EnsureHelperFile(
 				L"will use the existing file."
 			);
 
+			if (!CloseHandle(FileWriteHandle))
+			{
+				HideConsoleTraceLastError(L"CloseHandle");
+				return FALSE;
+			}
+
 			return TRUE;
 		}
 		else
@@ -295,7 +301,12 @@ BOOL WINAPI EnsureHelperFile(
 		ResourceId
 	);
 
-	CloseHandle(FileWriteHandle);
+	if (!CloseHandle(FileWriteHandle))
+	{
+		HideConsoleTraceLastError(L"CloseHandle");
+		return FALSE;
+	}
+
 	return Success;
 }
 

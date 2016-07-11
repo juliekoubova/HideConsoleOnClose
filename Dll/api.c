@@ -2,9 +2,7 @@
 #include "../Shared/api.h"
 #include "../Shared/trace.h"
 
-BOOL
-WINAPI
-LaunchWow64Helper(HWND ConsoleWindow);
+BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow);
 
 VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 {
@@ -95,8 +93,8 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 
 		if (IsWow64)
 		{
-			HideConsoleTrace(L"Launching Wow64Helper");
-			return LaunchWow64Helper(hWnd);
+			HideConsoleTrace(L"Running in WOW64, delegating to Wow64Helper");
+			return SendWow64HelperMessage(hWnd);
 		}
 	}
 

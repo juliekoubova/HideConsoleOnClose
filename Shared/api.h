@@ -9,6 +9,21 @@
 
 #define WM_HIDE_CONSOLE (WM_APP+0)
 
+#define HIDE_CONSOLE_NAME L"HideConsoleOnClose-1.0"
+
+#define WOW64HELPER_MUTEX \
+	L"Local\\" HIDE_CONSOLE_NAME L"-Wow64HelperMutex"
+
+#define WOW64HELPER_READY_EVENT \
+	L"Local\\" HIDE_CONSOLE_NAME L"-Wow64HelperReady"
+
+#define WOW64HELPER_READY_TIMEOUT 2500
+
+#define WOW64HELPER_SMTO_TIMEOUT 500
+
+#define WOW64HELPER_WINDOW_CLASS \
+	HIDE_CONSOLE_NAME L"-Wow64Helper"
+
 typedef struct tagHIDE_CONSOLE
 {
 	HHOOK   CbtHook;

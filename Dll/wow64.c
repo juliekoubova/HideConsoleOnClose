@@ -7,7 +7,6 @@
 
 #define X64_DLL_NAME   L"HideConsoleOnClose64.dll"
 #define X64_EXE_NAME   L"HideConsoleOnCloseWow64Helper.exe"
-#define VERSIONED_NAME L"HideConsoleOnClose-1.0"
 
 BOOL WINAPI GetModuleLastWriteTime(
 	HMODULE ModuleHandle,
@@ -65,6 +64,7 @@ BOOL WINAPI GetModuleLastWriteTime(
 
 	return Success;
 }
+
 BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 {
 	DWORD TempPathLength = GetTempPathW(BufferCch, Buffer);
@@ -87,7 +87,7 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 	HRESULT hr = StringCchCatW(
 		Buffer,
 		BufferCch,
-		VERSIONED_NAME L"\\"
+		HIDE_CONSOLE_NAME L"\\"
 	);
 
 	if (FAILED(hr))
@@ -299,13 +299,8 @@ BOOL WINAPI EnsureHelperFile(
 	return Success;
 }
 
-BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
+BOOL WINAPI CreateHelperProcess(VOID)
 {
-	HideConsoleTrace(
-		L"ConsoleWindow=%1!p!",
-		ConsoleWindow
-	);
-
 	BOOL  Success;
 	WCHAR FilePath[MAX_PATH];
 
@@ -355,16 +350,120 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 		/* lpProcessInfo       */ &ProcessInfo
 	);
 
-	if (Success)
-	{
-		CloseHandle(ProcessInfo.hThread);
-		CloseHandle(ProcessInfo.hProcess);
-	}
-	else
+	if (!Success)
 	{
 		HideConsoleTraceLastError(L"CreateProcessW");
 		return FALSE;
 	}
 
+	CloseHandle(ProcessInfo.hThread);
+	CloseHandle(ProcessInfo.hProcess);
+
 	return Success;
+}
+
+BOOL WINAPI WaitForHelperReady(VOID)
+{
+	HANDLE ReadyEvent = CreateEventW(
+		/* lpEventAttributes */ NULL,
+		/* bManualReset      */ TRUE,
+		/* bInitialState     */ FALSE,
+		/* lpName            */ WOW64HELPER_READY_EVENT
+	);
+
+	if (!ReadyEvent)
+	{
+		HideConsoleTraceLastError(L"CreateEventW");
+		return FALSE;
+	}
+
+	DWORD WaitResult = WaitForSingleObject(
+		ReadyEvent,
+		WOW64HELPER_READY_TIMEOUT
+	);
+
+	if (WaitResult == WAIT_FAILED)
+	{
+		HideConsoleTraceLastError(L"WaitForSingleObject");
+
+		if (!CloseHandle(ReadyEvent))
+		{
+			HideConsoleTraceLastError(L"CloseHandle");
+		}
+
+		return FALSE;
+	}
+
+	if (WaitResult == WAIT_TIMEOUT)
+	{
+		HideConsoleTrace(L"Timed out");
+
+		if (!CloseHandle(ReadyEvent))
+		{
+			HideConsoleTraceLastError(L"CloseHandle");
+		}
+
+		return FALSE;
+	}
+
+	if (!CloseHandle(ReadyEvent))
+	{
+		HideConsoleTraceLastError(L"CloseHandle");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow)
+{
+	HideConsoleTrace(L"ConsoleWindow=%1!p!", ConsoleWindow);
+
+	if (!CreateHelperProcess())
+	{
+		return FALSE;
+	}
+
+	if (!WaitForHelperReady())
+	{
+		return FALSE;
+	}
+
+	HWND MessageWindow = FindWindowExW(
+		HWND_MESSAGE,
+		NULL,
+		WOW64HELPER_WINDOW_CLASS,
+		NULL
+	);
+
+	if (!MessageWindow)
+	{
+		HideConsoleTraceLastError(L"FindWindowExW");
+		return FALSE;
+	}
+
+	DWORD_PTR HelperResult = 0;
+
+	LRESULT Success = SendMessageTimeoutW(
+		MessageWindow,
+		WM_HIDE_CONSOLE,
+		(WPARAM)ConsoleWindow,
+		(LPARAM)0,
+		SMTO_ABORTIFHUNG | SMTO_BLOCK | SMTO_ERRORONEXIT,
+		WOW64HELPER_SMTO_TIMEOUT,
+		&HelperResult
+	);
+
+	if (!Success)
+	{
+		HideConsoleTraceLastError(L"SendMessageTimeoutW");
+		return FALSE;
+	}
+
+	HideConsoleTrace(
+		L"WM_HIDE_CONSOLE Result=%1!p!",
+		HelperResult
+	);
+
+	return (BOOL)HelperResult;
 }

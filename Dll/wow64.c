@@ -15,7 +15,7 @@ BOOL WINAPI GetModuleLastWriteTime(
 )
 {
 	HideConsoleTrace(
-		L"GetModuleLastWriteTime: ModuleHandle=%1!p! LastWriteTime=%2!p!",
+		L"ModuleHandle=%1!p! LastWriteTime=%2!p!",
 		ModuleHandle,
 		LastWriteTime
 	);
@@ -34,10 +34,7 @@ BOOL WINAPI GetModuleLastWriteTime(
 
 	if (!FileNameCch)
 	{
-		HideConsoleTraceLastError(
-			L"GetModuleLastWriteTime: GetModuleFileNameW"
-		);
-
+		HideConsoleTraceLastError(L"GetModuleFileNameW");
 		return FALSE;
 	}
 
@@ -53,10 +50,7 @@ BOOL WINAPI GetModuleLastWriteTime(
 
 	if (FileHandle == INVALID_HANDLE_VALUE)
 	{
-		HideConsoleTraceLastError(
-			L"GetModuleLastWriteTime: CreateFileW"
-		);
-
+		HideConsoleTraceLastError(L"CreateFileW");
 		return FALSE;
 	}
 
@@ -77,18 +71,14 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 
 	if (!TempPathLength)
 	{
-		HideConsoleTraceLastError(
-			L"EnsureHelperDirectory: GetTempPathW"
-		);
-
+		HideConsoleTraceLastError(L"GetTempPathW");
 		return FALSE;
 	}
 
 	if (TempPathLength >= BufferCch)
 	{
 		HideConsoleTrace(
-			L"EnsureHelperDirectory: TempPathLength greater than provided "
-			L"buffer size"
+			L"TempPathLength greater than provided buffer size"
 		);
 
 		return FALSE;
@@ -102,34 +92,21 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 
 	if (FAILED(hr))
 	{
-		HideConsoleTraceErrorCode(
-			L"EnsureHelperDirectory: StringCchCatW",
-			hr
-		);
-
+		HideConsoleTraceErrorCode(L"StringCchCatW", hr);
 		return FALSE;
 	}
 
 	if (CreateDirectoryW(Buffer, NULL))
 	{
-		HideConsoleTrace(
-			L"EnsureHelperDirectory: Created directory '%1'",
-			Buffer
-		);
+		HideConsoleTrace(L"Created directory '%1'", Buffer);
 	}
 	else if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-		HideConsoleTrace(
-			L"EnsureHelperDirectory: directory '%1' already exists",
-			Buffer
-		);
+		HideConsoleTrace(L"Directory '%1' already exists", Buffer);
 	}
 	else
 	{
-		HideConsoleTraceLastError(
-			L"EnsureHelperDirectory: CreateDirectoryW"
-		);
-
+		HideConsoleTraceLastError(L"CreateDirectoryW");
 		return FALSE;
 	}
 
@@ -152,10 +129,7 @@ BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 
 	if (!ResourceHandle)
 	{
-		HideConsoleTraceLastError(
-			L"WriteRCDataToFile: FindResourceW"
-		);
-
+		HideConsoleTraceLastError(L"FindResourceW");
 		return FALSE;
 	}
 
@@ -171,10 +145,7 @@ BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 
 	if (!Resource)
 	{
-		HideConsoleTraceLastError(
-			L"WriteRCDataToFile: LoadResource"
-		);
-
+		HideConsoleTraceLastError(L"LoadResource");
 		goto Cleanup;
 	}
 
@@ -182,10 +153,7 @@ BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 
 	if (!Bytes)
 	{
-		HideConsoleTraceLastError(
-			L"WriteRCDataToFile: LockResource"
-		);
-
+		HideConsoleTraceLastError(L"LockResource");
 		goto Cleanup;
 	}
 
@@ -200,17 +168,11 @@ BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 
 	if (Success)
 	{
-		HideConsoleTrace(
-			L"WriteRCDataToFile: BytesWritten: %1!u!",
-			BytesWritten
-		);
+		HideConsoleTrace(L"BytesWritten: %1!u!", BytesWritten);
 	}
 	else
 	{
-		HideConsoleTraceLastError(
-			L"WriteRCDataToFile: WriteFile"
-		);
-
+		HideConsoleTraceLastError(L"WriteFile");
 		goto Cleanup;
 	}
 
@@ -233,7 +195,7 @@ BOOL WINAPI EnsureHelperFile(
 )
 {
 	HideConsoleTrace(
-		L"EnsureHelperFile: ResourceId=%1!u! FileName='%2'",
+		L"ResourceId=%1!u! FileName='%2'",
 		ResourceId,
 		FileName
 	);
@@ -249,19 +211,14 @@ BOOL WINAPI EnsureHelperFile(
 
 	if (FAILED(hr))
 	{
-		HideConsoleTraceErrorCode(
-			L"EnsureHelperFile: StringCchCatW",
-			hr
-		);
-
+		HideConsoleTraceErrorCode(L"StringCchCatW", hr);
 		return FALSE;
 	}
 
 	HANDLE FileWriteHandle = INVALID_HANDLE_VALUE;
 
 	HideConsoleTrace(
-		L"EnsureHelperFile: Attempting to CreateFileW Path='%1' "
-		L"for reading and writing",
+		L"Attempting to CreateFileW Path='%1' for reading and writing",
 		FilePath
 	);
 
@@ -279,28 +236,18 @@ BOOL WINAPI EnsureHelperFile(
 
 	if (FileWriteHandle == INVALID_HANDLE_VALUE)
 	{
-		HideConsoleTraceErrorCode(
-			L"EnsureHelperFile: CreateFileW",
-			LastError
-		);
-
+		HideConsoleTraceErrorCode(L"CreateFileW", LastError);
 		return FALSE;
 	}
 
 	if (LastError == ERROR_ALREADY_EXISTS)
 	{
-		HideConsoleTrace(
-			L"EnsureHelperFile: File '%1' already exists",
-			FilePath
-		);
+		HideConsoleTrace(L"File '%1' already exists", FilePath);
 
 		FILETIME FileLastWriteTime;
 		if (!GetFileTime(FileWriteHandle, NULL, NULL, &FileLastWriteTime))
 		{
-			HideConsoleTraceLastError(
-				L"EnsureHelperFile: GetFileTime"
-			);
-
+			HideConsoleTraceLastError(L"GetFileTime");
 			CloseHandle(FileWriteHandle);
 			return FALSE;
 		}
@@ -312,15 +259,8 @@ BOOL WINAPI EnsureHelperFile(
 			return FALSE;
 		}
 
-		HideConsoleTraceFileTime(
-			L"EnsureHelperFile: FileLastWriteTime",
-			&FileLastWriteTime
-		);
-
-		HideConsoleTraceFileTime(
-			L"EnsureHelperFile: ModuleLastWriteTime",
-			&ModuleLastWriteTime
-		);
+		HideConsoleTraceFileTime(L"FileLastWriteTime", &FileLastWriteTime);
+		HideConsoleTraceFileTime(L"ModuleLastWriteTime", &ModuleLastWriteTime);
 
 		LONG Result = CompareFileTime(
 			&ModuleLastWriteTime,
@@ -330,8 +270,8 @@ BOOL WINAPI EnsureHelperFile(
 		if (Result < 1)
 		{
 			HideConsoleTrace(
-				L"EnsureHelperFile: Module is older than the existing "
-				L"helper file, will use the existing file."
+				L"Module is older than the existing helper file, "
+				L"will use the existing file."
 			);
 
 			return TRUE;
@@ -339,8 +279,8 @@ BOOL WINAPI EnsureHelperFile(
 		else
 		{
 			HideConsoleTrace(
-				L"EnsureHelperFile: Module is newer than the existing "
-				L"helper file, will overwrite it."
+				L"Module is newer than the existing helper file, "
+				L"will overwrite it."
 			);
 		}
 	}
@@ -357,7 +297,7 @@ BOOL WINAPI EnsureHelperFile(
 BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 {
 	HideConsoleTrace(
-		L"LaunchWow64Helper: ConsoleWindow=%1!p!",
+		L"ConsoleWindow=%1!p!",
 		ConsoleWindow
 	);
 
@@ -395,10 +335,7 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 
 	if (!DWordToHex(ConsoleWindowDWord, CommandLine, ARRAYSIZE(CommandLine)))
 	{
-		HideConsoleTraceLastError(
-			L"LaunchWow64Helper: DWordToHex"
-		);
-
+		HideConsoleTraceLastError( L"DWordToHex" );
 		return FALSE;
 	}
 
@@ -414,7 +351,7 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 	PROCESS_INFORMATION ProcessInfo;
 
 	HideConsoleTrace(
-		L"LaunchWow64Helper: CreateProcessW Path='%1' Arguments='%2'",
+		L"CreateProcessW Path='%1' Arguments='%2'",
 		FilePath,
 		CommandLine
 	);
@@ -439,9 +376,7 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 	}
 	else
 	{
-		HideConsoleTraceLastError(
-			L"LaunchWow64Helper: CreateProcessW"
-		);
+		HideConsoleTraceLastError(L"CreateProcessW");
 	}
 
 	return Success;

@@ -57,17 +57,13 @@ VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 
 	if (Cch)
 	{
-		ImplHideConsoleTrace(
-			HIDE_CONSOLE_TRACE_PREFIX L"%1: %2\r\n",
-			Message,
-			Buffer
-		);
+		ImplHideConsoleTrace(L"%1: %2\r\n", Message, Buffer);
 	}
 	else
 	{
 		OutputDebugStringW(
 			HIDE_CONSOLE_TRACE_PREFIX 
-			L"HideConsoleTraceLastError: FormatMessageW failed"
+			L"HideConsoleTraceErrorCode: FormatMessageW failed"
 			L"\r\n"
 		);
 	}
@@ -81,10 +77,7 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 	if (!FileTimeToLocalFileTime(FileTime, &LocalFileTime))
 	{
-		HideConsoleTraceLastError(
-			L"HideConsoleTraceFileTime: FileTimeToLocalFileTime"
-		);
-
+		HideConsoleTraceLastError(L"FileTimeToLocalFileTime");
 		return;
 	}
 
@@ -92,14 +85,11 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 	if (!FileTimeToSystemTime(&LocalFileTime, &SystemTime))
 	{
-		HideConsoleTraceLastError(
-			L"HideConsoleTraceFileTime: FileTimeToSystemTime"
-		);
-
+		HideConsoleTraceLastError(L"FileTimeToSystemTime");
 		return;
 	}
 
-	WCHAR DateString[256];
+	WCHAR DateString[100];
 
 	DWORD DateStringCch = GetDateFormatEx(
 		LOCALE_NAME_INVARIANT,
@@ -113,14 +103,11 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 	if (!DateStringCch)
 	{
-		HideConsoleTraceLastError(
-			L"HideConsoleTraceFileTime: GetDateFormatEx"
-		);
-
+		HideConsoleTraceLastError(L"GetDateFormatEx");
 		return;
 	}
 
-	WCHAR TimeString[256];
+	WCHAR TimeString[100];
 
 	DWORD TimeStringCch = GetTimeFormatEx(
 		LOCALE_NAME_INVARIANT,
@@ -133,15 +120,12 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 	if (!TimeStringCch)
 	{
-		HideConsoleTraceLastError(
-			L"HideConsoleTraceFileTime: GetTimeFormatEx"
-		);
-
+		HideConsoleTraceLastError(L"GetTimeFormatEx");
 		return;
 	}
 
 	ImplHideConsoleTrace(
-		HIDE_CONSOLE_TRACE_PREFIX L"%1: %2 %3\r\n",
+		L"%1=%2 %3\r\n",
 		Message,
 		DateString,
 		TimeString

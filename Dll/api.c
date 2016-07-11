@@ -8,15 +8,18 @@ LaunchWow64Helper(HWND ConsoleWindow);
 
 VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 {
-	HideConsoleTrace(L"CleanupCallback");
+	HideConsoleTrace(
+		L"Instance=%1!p! Context=%2!p!",
+		Instance,
+		Context
+	);
 
 	PHIDE_CONSOLE HideConsole = Context;
 
 	if (HideConsole->OurModuleHandle)
 	{
 		HideConsoleTrace(
-			L"CleanupCallback: FreeLibraryWhenCallbackReturns "
-			L"OurModuleHandle=%1!p!",
+			L"FreeLibraryWhenCallbackReturns OurModuleHandle=%1!p!",
 			HideConsole->OurModuleHandle
 		);
 
@@ -28,9 +31,7 @@ VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 
 	if (HideConsole->ConhostWaitHandle)
 	{
-		HideConsoleTrace(
-			L"CleanupCallback: UnregisterWaitEx (blocking)"
-		);
+		HideConsoleTrace(L"UnregisterWaitEx (blocking)");
 
 		BOOL WaitUnregistered = UnregisterWaitEx(
 			HideConsole->ConhostWaitHandle,
@@ -39,9 +40,7 @@ VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 
 		if (!WaitUnregistered)
 		{
-			HideConsoleTraceLastError(
-				L"CleanupCallback: UnregisterWaitEx"
-			);
+			HideConsoleTraceLastError(L"UnregisterWaitEx");
 		}
 	}
 
@@ -50,7 +49,11 @@ VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 
 VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 {
-	HideConsoleTrace(L"OnThreadExited");
+	HideConsoleTrace(
+		L"Parameter=%1!p! TimerOrWaitFired=%2!u!",
+		Parameter,
+		TimerOrWaitFired
+	);
 
 	// Need to delegate the cleanup to another thread pool work item, because
 	// 1) UnregisterWaitEx waits for the wait callback to complete, and 
@@ -65,14 +68,14 @@ VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 	if (!Success)
 	{
 		HideConsoleTraceLastError(
-			L"OnThreadExited: TrySubmitThreadpoolCallback"
+			L"TrySubmitThreadpoolCallback"
 		);
 	}
 }
 
 BOOL WINAPI EnableForWindow(HWND hWnd)
 {
-	HideConsoleTrace(L"EnableForWindow: hWnd=0x%1!p!", hWnd);
+	HideConsoleTrace(L"hWnd=0x%1!p!", hWnd);
 
 	if (!hWnd)
 	{
@@ -86,13 +89,13 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 
 		if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
 		{
-			HideConsoleTraceLastError(L"EnableForWindow: IsWow64Process");
+			HideConsoleTraceLastError(L"IsWow64Process");
 			return FALSE;
 		}
 
 		if (IsWow64)
 		{
-			HideConsoleTrace(L"EnableForWindow: Launching Wow64Helper");
+			HideConsoleTrace(L"Launching Wow64Helper");
 			return LaunchWow64Helper(hWnd);
 		}
 	}
@@ -113,7 +116,7 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 	if (!AddedModuleRef)
 	{
 		HideConsoleTraceLastError(
-			L"EnableForWindow: GetModuleHandleExW"
+			L"GetModuleHandleExW"
 		);
 
 		goto Cleanup;
@@ -131,7 +134,7 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 	if (!RegisteredWait)
 	{
 		HideConsoleTraceLastError(
-			L"EnableForWindow: RegisterWaitForSingleObject"
+			L"RegisterWaitForSingleObject"
 		);
 
 		goto Cleanup;
@@ -147,13 +150,11 @@ Cleanup:
 
 		if (HideConsole->OurModuleHandle)
 		{
-			HideConsoleTrace(
-				L"EnableForWindow: Freeing our additional module handle"
-			);
+			HideConsoleTrace(L"Freeing our additional module handle");
 
 			if (!FreeLibrary(HideConsole->OurModuleHandle))
 			{
-				HideConsoleTraceLastError(L"EnableForWindow: FreeLibrary");
+				HideConsoleTraceLastError(L"FreeLibrary");
 			}
 		}
 

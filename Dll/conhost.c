@@ -32,7 +32,7 @@ BOOL CALLBACK FindThreadId(HWND hWnd, LPARAM lParam)
 //
 DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 {
-	HideConsoleTrace(L"FindConhostUIThreadId: hWnd=0x%1!p!", hWnd);
+	HideConsoleTrace(L"hWnd=%1!p!", hWnd);
 
 	if (!hWnd)
 	{
@@ -70,7 +70,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 		if (State.CurrentThreadId)
 		{
 			HideConsoleTrace(
-				L"FindConhostUIThreadId: EnumThreadWindows ThreadId=%1!u!",
+				L"EnumThreadWindows ThreadId=%1!u!",
 				State.CurrentThreadId
 			);
 
@@ -86,7 +86,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 
 	} while (Thread32Next(Snapshot, &ThreadEntry));
 
-	HideConsoleTrace(L"FindConhostUIThreadId: Result=%1!u!", State.Result);
+	HideConsoleTrace(L"Result=%1!u!", State.Result);
 
 Cleanup:
 

@@ -32,7 +32,7 @@ INT WINAPI wWinMain(
 )
 {
 	HideConsoleTrace(
-		L"wWinMain: Instance=%1!p!",
+		L"Instance=%1!p!",
 		Instance
 	);
 
@@ -55,7 +55,7 @@ INT WINAPI wWinMain(
 
 	if (!WindowClassAtom)
 	{
-		HideConsoleTraceLastError(L"wWinMain: RegisterClassExW");
+		HideConsoleTraceLastError(L"RegisterClassExW");
 		return 1;
 	}
 
@@ -73,7 +73,7 @@ INT WINAPI wWinMain(
 
 	if (!MessageWindow)
 	{
-		HideConsoleTraceLastError(L"wWinMain: CreateWindowExW");
+		HideConsoleTraceLastError(L"CreateWindowExW");
 		return 1;
 }
 
@@ -84,7 +84,7 @@ INT WINAPI wWinMain(
 	{
 		if (Result == -1)
 		{
-			HideConsoleTraceLastError(L"wWinMain: GetMessageW");
+			HideConsoleTraceLastError(L"GetMessageW");
 			return 1;
 		}
 

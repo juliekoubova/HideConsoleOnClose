@@ -15,6 +15,8 @@ VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 		{                                                                     \
 			ImplHideConsoleTrace(                                             \
 				HIDE_CONSOLE_TRACE_PREFIX                                     \
+				__FUNCTIONW__                                                 \
+				L": "                                                         \
 				msg                                                           \
 				L"\r\n",                                                      \
 				__VA_ARGS__                                                   \
@@ -27,7 +29,13 @@ VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 	{                                                                         \
 		if (HIDE_CONSOLE_TRACE)                                               \
 		{                                                                     \
-			ImplHideConsoleTraceErrorCode(msg, err);                          \
+			ImplHideConsoleTraceErrorCode(                                    \
+				HIDE_CONSOLE_TRACE_PREFIX                                     \
+				__FUNCTIONW__                                                 \
+				L": "                                                         \
+				msg,                                                          \
+				err                                                           \
+			);                                                                \
 		}                                                                     \
 	} while(0) 
 
@@ -36,7 +44,13 @@ VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 	{                                                                         \
 		if (HIDE_CONSOLE_TRACE)                                               \
 		{                                                                     \
-			ImplHideConsoleTraceFileTime(msg, ft);                            \
+			ImplHideConsoleTraceFileTime(                                     \
+				HIDE_CONSOLE_TRACE_PREFIX                                     \
+				__FUNCTIONW__                                                 \
+				L": "                                                         \
+				msg,                                                          \
+				ft                                                            \
+			);                                                                \
 		}                                                                     \
 	} while(0) 
 
@@ -45,6 +59,11 @@ VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 	{                                                                         \
 		if (HIDE_CONSOLE_TRACE)                                               \
 		{                                                                     \
-			ImplHideConsoleTraceLastError(msg);                               \
+			ImplHideConsoleTraceLastError(                                    \
+				HIDE_CONSOLE_TRACE_PREFIX                                     \
+				__FUNCTIONW__                                                 \
+				L": "                                                         \
+				msg                                                          \
+			);                                                                \
 		}                                                                     \
 	} while(0) 

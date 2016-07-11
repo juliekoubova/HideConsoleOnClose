@@ -12,7 +12,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow);
 BOOL WINAPI IsConsoleWindow(HWND hWnd)
 {
 	HideConsoleTrace(
-		L"IsConsoleWindow: hWnd=%1!p!",
+		L"hWnd=%1!p!",
 		hWnd
 	);
 
@@ -21,14 +21,14 @@ BOOL WINAPI IsConsoleWindow(HWND hWnd)
 
 	if (ClassNameCch == 0)
 	{
-		HideConsoleTraceLastError(L"IsConsoleWindow: GetClassNameW");
+		HideConsoleTraceLastError(L"GetClassNameW");
 		return FALSE;
 	}
 
 	if (ClassNameCch != ARRAYSIZE(ConsoleWindowClass) - 1)
 	{
 		HideConsoleTrace(
-			L"IsConsoleWindow: hWnd=%1!p! ClassName=%2 Result=FALSE",
+			L"hWnd=%1!p! ClassName=%2 Result=FALSE",
 			hWnd,
 			ClassName
 		);
@@ -46,7 +46,7 @@ BOOL WINAPI IsConsoleWindow(HWND hWnd)
 	);
 
 	HideConsoleTrace(
-		L"IsConsoleWindow: hWnd=%1!p! ClassName=%2 Result=%3",
+		L"hWnd=%1!p! ClassName=%2 Result=%3",
 		hWnd,
 		ClassName,
 		(CompareResult == CSTR_EQUAL) ? L"TRUE" : L"FALSE"
@@ -62,14 +62,14 @@ LRESULT CALLBACK HookCbt(INT32 nCode, WPARAM wParam, LPARAM lParam)
 		goto NextHook;
 	}
 
-	HideConsoleTrace(L"HookCbt: HCBT_SYSCOMMAND SC_CLOSE");
+	HideConsoleTrace(L"HCBT_SYSCOMMAND SC_CLOSE");
 
 	HWND ConsoleWindowBeingClosed = TlsGetValue(
 		g_TlsIndex
 	);
 
 	HideConsoleTrace(
-		L"HookCbt: ConsoleWindowBeingClosed=%1!p!",
+		L"ConsoleWindowBeingClosed=%1!p!",
 		ConsoleWindowBeingClosed
 	);
 
@@ -80,7 +80,7 @@ LRESULT CALLBACK HookCbt(INT32 nCode, WPARAM wParam, LPARAM lParam)
 
 	ShowWindow(ConsoleWindowBeingClosed, SW_HIDE);
 
-	HideConsoleTrace(L"HookCbt: Result=1");
+	HideConsoleTrace(L"Result=1");
 	return 1; // prevent action
 
 NextHook:
@@ -103,7 +103,7 @@ LRESULT CALLBACK HookWndProc(INT32 Code, WPARAM wParam, LPARAM lParam)
 	}
 
 	HideConsoleTrace(
-		L"HookWndProc: WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
+		L"WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
 		Msg->hwnd
 	);
 
@@ -114,7 +114,7 @@ LRESULT CALLBACK HookWndProc(INT32 Code, WPARAM wParam, LPARAM lParam)
 
 	if (!TlsSetValue(g_TlsIndex, Msg->hwnd))
 	{
-		HideConsoleTraceLastError(L"HookWndProc: TlsSetValue");
+		HideConsoleTraceLastError(L"TlsSetValue");
 		goto NextHook;
 	}
 
@@ -138,14 +138,14 @@ LRESULT CALLBACK HookWndProcRet(INT32 Code, WPARAM wParam, LPARAM lParam)
 	}
 
 	HideConsoleTrace(
-		L"HookWndProcRet: WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
+		L"WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
 		Msg->hwnd
 	);
 
 	HWND ConsoleWindowBeingClosed = TlsGetValue(g_TlsIndex);
 
 	HideConsoleTrace(
-		L"HookWndProcRet: ConsoleWindowBeingClosed=%1!p!",
+		L"ConsoleWindowBeingClosed=%1!p!",
 		ConsoleWindowBeingClosed
 	);
 
@@ -156,7 +156,7 @@ LRESULT CALLBACK HookWndProcRet(INT32 Code, WPARAM wParam, LPARAM lParam)
 
 	if (!TlsSetValue(g_TlsIndex, NULL))
 	{
-		HideConsoleTraceLastError(L"HookWndProcRet: TlsSetValue");
+		HideConsoleTraceLastError(L"TlsSetValue");
 		goto NextHook;
 	}
 
@@ -180,7 +180,7 @@ LRESULT CALLBACK HookGetMessage(INT32 Code, WPARAM wParam, LPARAM lParam)
 	}
 
 	HideConsoleTrace(
-		L"HookGetMessage: WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
+		L"WM_SYSCOMMAND SC_CLOSE hWnd=%1!p!",
 		Msg->hwnd
 	);
 
@@ -193,13 +193,12 @@ LRESULT CALLBACK HookGetMessage(INT32 Code, WPARAM wParam, LPARAM lParam)
 	ShowWindow(Msg->hwnd, SW_HIDE);
 
 	HideConsoleTrace(
-		L"HookGetMessage: WM_SYSCOMMAND changed into WM_NULL"
+		L"WM_SYSCOMMAND changed into WM_NULL"
 	);
 
 NextHook:
 
 	return CallNextHookEx(NULL, Code, wParam, lParam);
-
 }
 
 //
@@ -212,7 +211,7 @@ NextHook:
 BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 {
 	HideConsoleTrace(
-		L"CleanupHideConsole: HideConsole=%1!p! WasLastHook=%2!p!",
+		L"HideConsole=%1!p! WasLastHook=%2!p!",
 		HideConsole,
 		WasLastHook
 	);
@@ -223,7 +222,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	LONG HookCount = InterlockedDecrement(&g_HookCount);
 
 	HideConsoleTrace(
-		L"CleanupHideConsole: HookCount=%1!i!",
+		L"HookCount=%1!i!",
 		HookCount
 	);
 
@@ -238,10 +237,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 	{
 		if (!CloseHandle(HideConsole->ConhostThreadHandle))
 		{
-			HideConsoleTraceLastError(
-				L"CleanupHideConsole: CloseHandle"
-			);
-
+			HideConsoleTraceLastError(L"CloseHandle");
 			Result = FALSE;
 		}
 	}
@@ -252,7 +248,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
-				L"CleanupHideConsole: UnhookWindowsHookEx(GetMessageHook)"
+				L"UnhookWindowsHookEx(GetMessageHook)"
 			);
 
 			Result = FALSE;
@@ -265,7 +261,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
-				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcRetHook)"
+				L"UnhookWindowsHookEx(WndProcRetHook)"
 			);
 
 			Result = FALSE;
@@ -278,7 +274,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
-				L"CleanupHideConsole: UnhookWindowsHookEx(WndProcHook)"
+				L"UnhookWindowsHookEx(WndProcHook)"
 			);
 
 			Result = FALSE;
@@ -291,7 +287,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 			(GetLastError() != ERROR_SUCCESS))
 		{
 			HideConsoleTraceLastError(
-				L"CleanupHideConsole: UnhookWindowsHookEx(CbtHook)"
+				L"UnhookWindowsHookEx(CbtHook)"
 			);
 
 			Result = FALSE;
@@ -300,10 +296,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 
 	if (!HeapFree(GetProcessHeap(), 0, HideConsole))
 	{
-		HideConsoleTraceLastError(
-			L"CleanupHideConsole: HeapFree"
-		);
-
+		HideConsoleTraceLastError(L"HeapFree");
 		Result = FALSE;
 	}
 
@@ -313,7 +306,7 @@ BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook)
 PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 {
 	HideConsoleTrace(
-		L"SetupHideConsole: hWnd=%1!p!",
+		L"hWnd=%1!p!",
 		hWnd
 	);
 
@@ -327,8 +320,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 	if (!ThreadId)
 	{
 		HideConsoleTrace(
-			L"SetupHideConsole: Conhost UI thread for hWnd 0x%1!p! "
-			L"could not be found",
+			L"Conhost UI thread for hWnd 0x%1!p! could not be found",
 			hWnd
 		);
 
@@ -343,7 +335,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result)
 	{
-		HideConsoleTraceLastError(L"SetupHideConsole: HeapAlloc");
+		HideConsoleTraceLastError(L"HeapAlloc");
 		return NULL;
 	}
 
@@ -354,7 +346,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 	LONG HookCount = InterlockedIncrement(&g_HookCount);
 
 	HideConsoleTrace(
-		L"SetupHideConsole: HookCount=%1!i!",
+		L"HookCount=%1!i!",
 		HookCount
 	);
 
@@ -362,10 +354,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->ConhostThreadHandle)
 	{
-		HideConsoleTraceLastError(
-			L"SetupHideConsole: OpenThread"
-		);
-
+		HideConsoleTraceLastError(L"OpenThread");
 		goto Cleanup;
 	}
 
@@ -378,10 +367,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->CbtHook)
 	{
-		HideConsoleTraceLastError(
-			L"SetupHideConsole: SetWindowsHookExW(WH_CBT)"
-		);
-
+		HideConsoleTraceLastError(L"SetWindowsHookExW(WH_CBT)");
 		goto Cleanup;
 	}
 
@@ -394,10 +380,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->WndProcHook)
 	{
-		HideConsoleTraceLastError(
-			L"SetupHideConsole: SetWindowsHookExW(WH_CALLWNDPROC)"
-		);
-
+		HideConsoleTraceLastError(L"SetWindowsHookExW(WH_CALLWNDPROC)");
 		goto Cleanup;
 	}
 
@@ -410,10 +393,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->WndProcRetHook)
 	{
-		HideConsoleTraceLastError(
-			L"SetupHideConsole: SetWindowsHookExW(WH_CALLWNDPROCRET)"
-		);
-
+		HideConsoleTraceLastError(L"SetWindowsHookExW(WH_CALLWNDPROCRET)");
 		goto Cleanup;
 	}
 
@@ -426,10 +406,7 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND hWnd)
 
 	if (!Result->GetMessageHook)
 	{
-		HideConsoleTraceLastError(
-			L"SetupHideConsole: SetWindowsHookExW(WH_GETMESSAGE)"
-		);
-
+		HideConsoleTraceLastError(L"SetWindowsHookExW(WH_GETMESSAGE)");
 		goto Cleanup;
 	}
 

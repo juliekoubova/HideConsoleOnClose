@@ -215,21 +215,19 @@ BOOL WINAPI EnsureHelperFile(
 		return FALSE;
 	}
 
-	HANDLE FileWriteHandle = INVALID_HANDLE_VALUE;
-
 	HideConsoleTrace(
 		L"Attempting to CreateFileW Path='%1' for reading and writing",
 		FilePath
 	);
 
-	FileWriteHandle = CreateFileW(
-		FilePath,
-		GENERIC_READ | GENERIC_WRITE,
-		0,
-		NULL,
-		OPEN_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
+	HANDLE FileWriteHandle = CreateFileW(
+		/* lpFileName            */ FilePath,
+		/* dwDesiredAccess       */ GENERIC_READ | GENERIC_WRITE,
+		/* dwShareMode           */ 0,
+		/* lpSecurityAttributes  */ NULL,
+		/* dwCreationDisposition */ OPEN_ALWAYS,
+		/* dwFlagsAndAttributes  */ FILE_ATTRIBUTE_NORMAL,
+		/* hTemplateFile         */ NULL
 	);
 
 	DWORD LastError = GetLastError();
@@ -237,6 +235,13 @@ BOOL WINAPI EnsureHelperFile(
 	if (FileWriteHandle == INVALID_HANDLE_VALUE)
 	{
 		HideConsoleTraceErrorCode(L"CreateFileW", LastError);
+
+		if (LastError == ERROR_SHARING_VIOLATION)
+		{
+			HideConsoleTrace(L"Wow64Helper probably running, continuing");
+			return TRUE;
+		}
+
 		return FALSE;
 	}
 
@@ -303,7 +308,6 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 
 	BOOL  Success;
 	WCHAR FilePath[MAX_PATH];
-	WCHAR CommandLine[32];
 
 	Success = EnsureHelperFile(
 		IDR_X64_DLL,
@@ -325,20 +329,6 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 	if (!Success)
 		return FALSE;
 
-#pragma warning(push)
-#pragma warning(disable:4311)
-
-	// only low 32-bits of HWNDs are used
-	DWORD ConsoleWindowDWord = (DWORD)ConsoleWindow;
-
-#pragma warning(pop)
-
-	if (!DWordToHex(ConsoleWindowDWord, CommandLine, ARRAYSIZE(CommandLine)))
-	{
-		HideConsoleTraceLastError( L"DWordToHex" );
-		return FALSE;
-	}
-
 	STARTUPINFOW StartupInfo;
 	StartupInfo.cb = sizeof(StartupInfo);
 	StartupInfo.lpReserved = NULL;
@@ -350,23 +340,19 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 
 	PROCESS_INFORMATION ProcessInfo;
 
-	HideConsoleTrace(
-		L"CreateProcessW Path='%1' Arguments='%2'",
-		FilePath,
-		CommandLine
-	);
+	HideConsoleTrace(L"CreateProcessW Path='%1'", FilePath);
 
 	Success = CreateProcessW(
-		FilePath,
-		CommandLine,
-		NULL,
-		NULL,
-		TRUE,
-		0,
-		NULL,
-		NULL,
-		&StartupInfo,
-		&ProcessInfo
+		/* lpApplicationName   */ FilePath,
+		/* lpCommandLine       */ NULL,
+		/* lpProcessAttributes */ NULL,
+		/* lpThreadAttributes  */ NULL,
+		/* bInheritHandles     */ FALSE,
+		/* dwCreationFlags     */ 0,
+		/* lpEnvironment       */ NULL,
+		/* lpCurrentDirectory  */ NULL,
+		/* lpStartupInfo       */ &StartupInfo,
+		/* lpProcessInfo       */ &ProcessInfo
 	);
 
 	if (Success)
@@ -377,6 +363,7 @@ BOOL WINAPI LaunchWow64Helper(HWND ConsoleWindow)
 	else
 	{
 		HideConsoleTraceLastError(L"CreateProcessW");
+		return FALSE;
 	}
 
 	return Success;

@@ -7,6 +7,8 @@
 #define X64_DLL_NAME   L"HideConsoleOnClose64.dll"
 #define X64_EXE_NAME   L"HideConsoleOnCloseWow64Helper.exe"
 
+#ifndef _WIN64
+
 BOOL WINAPI GetModuleLastWriteTime(
 	HMODULE ModuleHandle,
 	PFILETIME LastWriteTime
@@ -477,3 +479,5 @@ BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow)
 
 	return (BOOL)HelperResult;
 }
+
+#endif ! _WIN64

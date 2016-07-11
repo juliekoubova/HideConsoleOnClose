@@ -63,11 +63,15 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 		goto Cleanup;
 	}
 
+#if _DEBUG
 	LARGE_INTEGER Frequency;
-	QueryPerformanceFrequency(&Frequency);
-
 	LARGE_INTEGER StartingTime;
+	LARGE_INTEGER EndingTime;
+	LARGE_INTEGER ElapsedMilliseconds;
+
+	QueryPerformanceFrequency(&Frequency);
 	QueryPerformanceCounter(&StartingTime);
+#endif
 
 	DWORD ThreadsEnumerated = 0;
 
@@ -91,21 +95,12 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 
 	} while (Thread32Next(Snapshot, &ThreadEntry));
 
-	LARGE_INTEGER EndingTime;
-	QueryPerformanceCounter(&EndingTime);
+#if defined(_DEBUG) && (HIDE_CONSOLE_TRACE)
 
-	LARGE_INTEGER ElapsedMilliseconds;
+	QueryPerformanceCounter(&EndingTime);
 	ElapsedMilliseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
 
-	if (ElapsedMilliseconds.HighPart || Frequency.HighPart)
-	{
-		HideConsoleTrace(
-			L"ThreadsEnumerated=%1!u! Result=%2!u!",
-			ThreadsEnumerated,
-			State.Result
-		);
-	}
-	else
+	if (!ElapsedMilliseconds.HighPart && !Frequency.HighPart)
 	{
 		ElapsedMilliseconds.LowPart *= 1000;
 		ElapsedMilliseconds.LowPart /= Frequency.LowPart;
@@ -117,6 +112,15 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 			State.Result
 		);
 	}
+	else
+	{
+		HideConsoleTrace(
+			L"ThreadsEnumerated=%1!u! Result=%2!u!",
+			ThreadsEnumerated,
+			State.Result
+		);
+	}
+#endif
 
 Cleanup:
 

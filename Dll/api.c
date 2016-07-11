@@ -77,26 +77,27 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 
 	if (!hWnd)
 	{
-		SetLastError(ERROR_SUCCESS);
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
-	if (!HIDE_CONSOLE_WIN64)
+#ifndef _WIN64
+
+	BOOL IsWow64;
+
+	if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
 	{
-		BOOL IsWow64;
-
-		if (!IsWow64Process(GetCurrentProcess(), &IsWow64))
-		{
-			HideConsoleTraceLastError(L"IsWow64Process");
-			return FALSE;
-		}
-
-		if (IsWow64)
-		{
-			HideConsoleTrace(L"Running in WOW64, delegating to Wow64Helper");
-			return SendWow64HelperMessage(hWnd);
-		}
+		HideConsoleTraceLastError(L"IsWow64Process");
+		return FALSE;
 	}
+
+	if (IsWow64)
+	{
+		HideConsoleTrace(L"Running in WOW64, delegating to Wow64Helper");
+		return SendWow64HelperMessage(hWnd);
+	}
+
+#endif
 
 	PHIDE_CONSOLE HideConsole = SetupHideConsole(hWnd);
 

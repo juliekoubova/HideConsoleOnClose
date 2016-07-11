@@ -1,10 +1,17 @@
 #include "stdafx.h"
 #include "trace.h"
 
+#if NDEBUG
+
+VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...) {}
+VOID WINAPI  ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode) {}
+VOID WINAPI  ImplHideConsoleTraceFileTime(LPCWSTR Prefix, PFILETIME FileTime) {}
+VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message) {}
+
+#else
+
 VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 {
-	if (!HIDE_CONSOLE_TRACE) return;
-
 	DWORD LastError = GetLastError();
 
 	va_list args;
@@ -30,7 +37,7 @@ VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 	else
 	{
 		OutputDebugStringW(
-			HIDE_CONSOLE_TRACE_PREFIX 
+			HIDE_CONSOLE_TRACE_PREFIX
 			L"HideConsoleTrace: FormatMessageW failed"
 			L"\r\n"
 		);
@@ -41,14 +48,12 @@ VOID WINAPIV ImplHideConsoleTrace(LPCWSTR Format, ...)
 
 VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 {
-	if (!HIDE_CONSOLE_TRACE) return;
-
 	DWORD LastError = GetLastError();
 
 	WCHAR Buffer[1024];
 
 	DWORD Cch = FormatMessageW(
-		FORMAT_MESSAGE_FROM_SYSTEM | 
+		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS |
 		FORMAT_MESSAGE_MAX_WIDTH_MASK,
 		NULL,
@@ -66,7 +71,7 @@ VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 	else
 	{
 		OutputDebugStringW(
-			HIDE_CONSOLE_TRACE_PREFIX 
+			HIDE_CONSOLE_TRACE_PREFIX
 			L"HideConsoleTraceErrorCode: FormatMessageW failed"
 			L"\r\n"
 		);
@@ -77,8 +82,6 @@ VOID WINAPI ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode)
 
 VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 {
-	if (!HIDE_CONSOLE_TRACE) return;
-
 	FILETIME LocalFileTime;
 
 	if (!FileTimeToLocalFileTime(FileTime, &LocalFileTime))
@@ -140,11 +143,11 @@ VOID WINAPI ImplHideConsoleTraceFileTime(LPCWSTR Message, PFILETIME FileTime)
 
 VOID WINAPI ImplHideConsoleTraceLastError(LPCWSTR Message)
 {
-	if (!HIDE_CONSOLE_TRACE) return;
-
 	DWORD LastError = GetLastError();
 
 	ImplHideConsoleTraceErrorCode(Message, LastError);
 
 	SetLastError(LastError);
 }
+
+#endif

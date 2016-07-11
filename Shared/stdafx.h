@@ -6,12 +6,6 @@
 #  define HIDE_CONSOLE_TRACE 0
 #endif
 
-#ifdef _WIN64
-#  define HIDE_CONSOLE_WIN64 1
-#else
-#  define HIDE_CONSOLE_WIN64 0
-#endif
-
 // We need at least Windows 7, that's where conhost.exe was introduced.
 // In previous versions, console windows were owned by the special csrss.exe
 ///process, which isn't possible to hook anyway.

@@ -2,7 +2,7 @@
 #include "../Shared/api.h"
 #include "../Shared/trace.h"
 
-HANDLE g_ReceivingMessagesEventHandle = NULL;
+HANDLE g_ReadyEvent = NULL;
 
 LRESULT WINAPI MessageWndProc(
 	HWND   Window,
@@ -23,9 +23,34 @@ LRESULT WINAPI MessageWndProc(
 		return EnableForWindow(ConsoleWindow);
 	}
 
+	if (Message == WM_CLOSE)
+	{
+		if (GetHookCount())
+		{
+			HideConsoleTrace(L"WM_CLOSE: GetHookCount() != 0");
+		}
+		else
+		{
+			HideConsoleTrace(L"WM_CLOSE: GetHookCount() == 0, destroy window");
+
+			if (!DestroyWindow(Window))
+			{
+				HideConsoleTraceLastError(L"WM_CLOSE: DestroyWindow");
+			}
+		}
+
+		return 0;
+	}
+
 	if (Message == WM_CREATE)
 	{
-		if (!SetEvent(g_ReceivingMessagesEventHandle))
+		if (!CloseWindowOnLastUnhook(Window))
+		{
+			HideConsoleTraceLastError(L"WM_CREATE: CloseWindowOnLastUnhook");
+			return -1;
+		}
+
+		if (!SetEvent(g_ReadyEvent))
 		{
 			HideConsoleTraceLastError(L"WM_CREATE: SetEvent");
 			return -1;
@@ -36,7 +61,7 @@ LRESULT WINAPI MessageWndProc(
 
 	if (Message == WM_DESTROY)
 	{
-		if (ResetEvent(g_ReceivingMessagesEventHandle))
+		if (ResetEvent(g_ReadyEvent))
 		{
 			HideConsoleTrace(L"WM_DESTROY: Calling PostQuitMessage(0)");
 			PostQuitMessage(0);
@@ -148,14 +173,14 @@ INT WINAPI wWinMain(
 
 	HideConsoleTrace(L"CreateEventW Name='" WOW64HELPER_READY_EVENT L"'");
 
-	g_ReceivingMessagesEventHandle = CreateEventW(
+	g_ReadyEvent = CreateEventW(
 		/* lpEventAttributes */ NULL,
 		/* bManualReset      */ TRUE,
 		/* bInitialState     */ FALSE,
 		/* lpName            */ WOW64HELPER_READY_EVENT
 	);
 
-	if (!g_ReceivingMessagesEventHandle)
+	if (!g_ReadyEvent)
 	{
 		HideConsoleTraceLastError(L"CreateEventW");
 		return 1;
@@ -164,7 +189,7 @@ INT WINAPI wWinMain(
 	// Reset the event in case other Wow64Helper instance crashed with the
 	// event signaled and some other process has kept it open.
 
-	if (!ResetEvent(g_ReceivingMessagesEventHandle))
+	if (!ResetEvent(g_ReadyEvent))
 	{
 		HideConsoleTraceLastError(L"ResetEvent");
 		return 1;

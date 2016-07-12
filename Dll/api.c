@@ -2,6 +2,8 @@
 #include "../Shared/api.h"
 #include "../Shared/trace.h"
 
+HWND g_WindowToBeClosed = NULL;
+
 BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow);
 
 VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
@@ -42,7 +44,27 @@ VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
 		}
 	}
 
-	CleanupHideConsole(HideConsole, NULL);
+	BOOL WasLastHook = FALSE;
+	CleanupHideConsole(HideConsole, &WasLastHook);
+
+	HWND WindowToBeClosed = g_WindowToBeClosed;
+
+	HideConsoleTrace(
+		L"WasLastHook=%1!u! WindowToBeClosed=%2!p!",
+		WasLastHook,
+		WindowToBeClosed
+	);
+
+	if (WindowToBeClosed && WasLastHook)
+	{
+		HideConsoleTrace(L"Closing hWnd=%1!p!", WindowToBeClosed);
+
+		if (!PostMessageW(WindowToBeClosed, WM_CLOSE, 0, 0))
+		{
+			HideConsoleTraceLastError(L"PostMessageW");
+		}
+	}
+
 }
 
 VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
@@ -65,9 +87,7 @@ VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 
 	if (!Success)
 	{
-		HideConsoleTraceLastError(
-			L"TrySubmitThreadpoolCallback"
-		);
+		HideConsoleTraceLastError(L"TrySubmitThreadpoolCallback");
 	}
 }
 
@@ -163,4 +183,31 @@ Cleanup:
 	}
 
 	return FALSE;
+}
+
+BOOL WINAPI CloseWindowOnLastUnhook(HWND WindowToBeClosed)
+{
+	HideConsoleTrace(L"WindowToBeClosed=%1!p!", WindowToBeClosed);
+
+	if (!WindowToBeClosed)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	HWND Current = InterlockedCompareExchangePointer(
+		&g_WindowToBeClosed,
+		WindowToBeClosed,
+		NULL
+	);
+
+	if (Current != NULL)
+	{
+		HideConsoleTrace(L"WindowToBeClosed already set");
+		SetLastError(ERROR_ACCESS_DENIED);
+		return FALSE;
+	}
+
+	SetLastError(ERROR_SUCCESS);
+	return TRUE;
 }

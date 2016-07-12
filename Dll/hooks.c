@@ -417,3 +417,8 @@ Cleanup:
 	CleanupHideConsole(Result, NULL);
 	return NULL;
 }
+
+LONG WINAPI GetHookCount(VOID)
+{
+	return g_HookCount;
+}

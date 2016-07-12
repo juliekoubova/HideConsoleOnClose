@@ -1,3 +1,5 @@
 LIBRARY 
 EXPORTS 
-	EnableForWindow    @1
+	EnableForWindow         @1
+	GetHookCount	        @2 NONAME
+	CloseWindowOnLastUnhook @3 NONAME

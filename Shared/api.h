@@ -44,3 +44,9 @@ PHIDE_CONSOLE WINAPI SetupHideConsole(HWND ConsoleWindow);
 
 HIDE_CONSOLE_API
 BOOL WINAPI EnableForWindow(HWND ConsoleWindow);
+
+HIDE_CONSOLE_API
+LONG WINAPI GetHookCount(VOID);
+
+HIDE_CONSOLE_API
+BOOL WINAPI CloseWindowOnLastUnhook(HWND WindowToBeClosed);

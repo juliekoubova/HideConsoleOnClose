@@ -39,13 +39,13 @@ BOOL WINAPI GetModuleLastWriteTime(
 	}
 
 	HANDLE FileHandle = CreateFileW(
-		FileName,
-		GENERIC_READ,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
+		/* lpFileName            */ FileName,
+		/* dwDesiredAccess       */ GENERIC_READ,
+		/* dwShareMode           */ FILE_SHARE_READ,
+		/* lpSecurityAttributes  */ NULL,
+		/* dwCreationDisposition */ OPEN_EXISTING,
+		/* dwFlagsAndAttributes  */ FILE_ATTRIBUTE_NORMAL,
+		/* hTemplateFile         */ NULL
 	);
 
 	if (FileHandle == INVALID_HANDLE_VALUE)
@@ -61,7 +61,11 @@ BOOL WINAPI GetModuleLastWriteTime(
 		LastWriteTime
 	);
 
-	CloseHandle(FileHandle);
+	if (!CloseHandle(FileHandle))
+	{
+		HideConsoleTraceLastError(L"CloseHandle");
+		return FALSE;
+	}
 
 	return Success;
 }
@@ -78,10 +82,7 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 
 	if (TempPathLength >= BufferCch)
 	{
-		HideConsoleTrace(
-			L"TempPathLength greater than provided buffer size"
-		);
-
+		HideConsoleTrace(L"TempPathLength greater than provided buffer size");
 		return FALSE;
 	}
 
@@ -116,6 +117,12 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 
 BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 {
+	HideConsoleTrace(
+		L"FileHandle=%1!p! ResourceId=%2!u!",
+		FileHandle,
+		ResourceId
+	);
+
 	BOOL    Success = FALSE;
 	HRSRC   ResourceHandle = NULL;
 	HGLOBAL Resource = NULL;
@@ -138,6 +145,12 @@ BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 		g_ModuleHandle,
 		ResourceHandle
 	);
+
+	if (!BytesCount)
+	{
+		HideConsoleTraceLastError(L"SizeofResource");
+		goto Cleanup;
+	}
 
 	Resource = LoadResource(
 		g_ModuleHandle,
@@ -217,7 +230,7 @@ BOOL WINAPI EnsureHelperFile(
 	}
 
 	HideConsoleTrace(
-		L"Attempting to CreateFileW Path='%1' for reading and writing",
+		L"CreateFileW Path='%1' DesiredAccess=GENERIC_READ|GENERIC_WRITE",
 		FilePath
 	);
 
@@ -347,7 +360,7 @@ BOOL WINAPI CreateHelperProcess(VOID)
 
 	PROCESS_INFORMATION ProcessInfo;
 
-	HideConsoleTrace(L"CreateProcessW Path='%1'", FilePath);
+	HideConsoleTrace(L"CreateProcessW ApplicationName='%1'", FilePath);
 
 	Success = CreateProcessW(
 		/* lpApplicationName   */ FilePath,
@@ -408,7 +421,7 @@ BOOL WINAPI WaitForHelperReady(VOID)
 
 	if (WaitResult == WAIT_TIMEOUT)
 	{
-		HideConsoleTrace(L"Timed out");
+		HideConsoleTrace(L"WAIT_TIMEOUT");
 
 		if (!CloseHandle(ReadyEvent))
 		{

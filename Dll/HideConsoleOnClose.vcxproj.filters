@@ -10,6 +10,7 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="dll.h" />
+    <ClInclude Include="hooks.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

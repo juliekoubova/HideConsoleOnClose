@@ -18,35 +18,45 @@
 	L"Local\\" HIDE_CONSOLE_NAME L"-Wow64HelperReady"
 
 #define WOW64HELPER_READY_TIMEOUT 2500
-
 #define WOW64HELPER_SMTO_TIMEOUT 500
 
 #define WOW64HELPER_WINDOW_CLASS \
 	HIDE_CONSOLE_NAME L"-Wow64Helper"
 
-typedef struct tagHIDE_CONSOLE
+typedef struct tagHIDE_CONSOLE_HOOKS
 {
 	HHOOK   CbtHook;
 	HHOOK   GetMessageHook;
 	HHOOK   WndProcHook;
 	HHOOK   WndProcRetHook;
+}
+HIDE_CONSOLE_HOOKS, *PHIDE_CONSOLE_HOOKS;
 
-	HANDLE  ConhostThreadHandle;
-	HANDLE  ConhostWaitHandle;
+typedef struct tagHIDE_CONSOLE_WAIT
+{
+	HANDLE Object;
+	HANDLE Wait;
+}
+HIDE_CONSOLE_WAIT, *PHIDE_CONSOLE_WAIT;
 
-	HMODULE OurModuleHandle;
+typedef struct tagHIDE_CONSOLE
+{
+	HMODULE            Module;
+	HIDE_CONSOLE_HOOKS Hooks;
+
+	DWORD              WaitsCount;
+	HIDE_CONSOLE_WAIT  Waits[1];
 }
 HIDE_CONSOLE, *PHIDE_CONSOLE;
-
-BOOL WINAPI CleanupHideConsole(PHIDE_CONSOLE HideConsole, PBOOL WasLastHook);
-
-PHIDE_CONSOLE WINAPI SetupHideConsole(HWND ConsoleWindow);
 
 HIDE_CONSOLE_API
 BOOL WINAPI EnableForWindow(HWND ConsoleWindow);
 
 HIDE_CONSOLE_API
-LONG WINAPI GetHookCount(VOID);
+BOOL WINAPI EnableForWindowWithOwner(HWND ConsoleWindow, DWORD OwnerThreadId);
 
 HIDE_CONSOLE_API
 BOOL WINAPI CloseWindowOnLastUnhook(HWND WindowToBeClosed);
+
+HIDE_CONSOLE_API
+LONG WINAPI GetHookCount(VOID);

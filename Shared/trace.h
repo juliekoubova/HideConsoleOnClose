@@ -8,6 +8,23 @@ VOID WINAPI  ImplHideConsoleTraceErrorCode(LPCWSTR Message, DWORD ErrorCode);
 VOID WINAPI  ImplHideConsoleTraceFileTime(LPCWSTR Prefix, PFILETIME FileTime);
 VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 
+#define HideConsoleAssert(condition)                                          \
+	do                                                                        \
+	{                                                                         \
+		if (HIDE_CONSOLE_TRACE && !(condition))                               \
+		{                                                                     \
+			ImplHideConsoleTrace(                                             \
+				HIDE_CONSOLE_TRACE_PREFIX                                     \
+				__FUNCTIONW__                                                 \
+				L": Assertion failed: "                                       \
+				_CRT_WIDE(_CRT_STRINGIZE(condition))                          \
+				L"\r\n"                                                       \
+			);                                                                \
+		                                                                      \
+			DbgRaiseAssertionFailure();                                       \
+		}                                                                     \
+	} while(0) 
+
 #define HideConsoleTrace(msg, ...)                                            \
 	do                                                                        \
 	{                                                                         \

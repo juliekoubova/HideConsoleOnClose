@@ -27,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dll.h" />
+    <ClInclude Include="hooks.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -4,7 +4,7 @@
 
 HANDLE g_ReadyEvent = NULL;
 
-LRESULT WINAPI MessageWndProc(
+static LRESULT WINAPI MessageWndProc(
 	HWND   Window,
 	UINT   Message,
 	WPARAM wParam,
@@ -14,17 +14,22 @@ LRESULT WINAPI MessageWndProc(
 	if (Message == WM_HIDE_CONSOLE)
 	{
 		HWND ConsoleWindow = (HWND)wParam;
+		DWORD OwnerThreadId = (DWORD)lParam;
 
 		HideConsoleTrace(
-			L"WM_HIDE_CONSOLE: ConsoleWindow=%1!p!",
-			ConsoleWindow
+			L"WM_HIDE_CONSOLE: ConsoleWindow=%1!p! OwnerThreadId=%2!u!",
+			ConsoleWindow,
+			OwnerThreadId
 		);
 
-		return EnableForWindow(ConsoleWindow);
+		return EnableForWindowWithOwner(ConsoleWindow, OwnerThreadId);
 	}
 
 	if (Message == WM_CLOSE)
 	{
+		// Make sure we didn't set up any new hooks in between the last hook 
+		// cleanup and processing of this message.
+
 		if (GetHookCount())
 		{
 			HideConsoleTrace(L"WM_CLOSE: GetHookCount() != 0");
@@ -63,13 +68,14 @@ LRESULT WINAPI MessageWndProc(
 	{
 		if (ResetEvent(g_ReadyEvent))
 		{
-			HideConsoleTrace(L"WM_DESTROY: Calling PostQuitMessage(0)");
+			HideConsoleTrace(L"WM_DESTROY: PostQuitMessage(0)");
 			PostQuitMessage(0);
 		}
 		else
 		{
 			HideConsoleTraceLastError(L"ResetEvent");
-			HideConsoleTrace(L"WM_DESTROY: Calling PostQuitMessage(1)");
+			HideConsoleTrace(L"WM_DESTROY: PostQuitMessage(1)");
+
 			PostQuitMessage(1);
 		}
 
@@ -79,7 +85,7 @@ LRESULT WINAPI MessageWndProc(
 	return DefWindowProcW(Window, Message, wParam, lParam);
 }
 
-HWND WINAPI CreateMessageWindow(HINSTANCE Instance)
+static HWND WINAPI CreateMessageWindow(HINSTANCE Instance)
 {
 	WNDCLASSW WindowClass;
 	WindowClass.lpfnWndProc = MessageWndProc;

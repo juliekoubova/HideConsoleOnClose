@@ -1,73 +1,193 @@
 #include "../Shared/stdafx.h"
 #include "../Shared/api.h"
 #include "../Shared/trace.h"
+#include "hooks.h"
 
-HWND g_WindowToBeClosed = NULL;
+static HWND g_WindowToBeClosed = NULL;
 
-BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow);
+DWORD WINAPI FindConhostUIThreadId(HWND ConsoleWindow);
+BOOL  WINAPI SendWow64HelperMessage(HWND ConsoleWindow);
 
-VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context)
+static PHIDE_CONSOLE WINAPI AllocHideConsole(DWORD WaitsCount)
+{
+	HideConsoleTrace(L"WaitsCount=%1!u!", WaitsCount);
+
+	HANDLE ProcessHeap = GetProcessHeap();
+
+	if (!ProcessHeap)
+	{
+		HideConsoleTraceLastError(L"GetProcessHeap");
+		return NULL;
+	}
+
+	PHIDE_CONSOLE Result = HeapAlloc(
+		ProcessHeap,
+		HEAP_ZERO_MEMORY,
+		sizeof(HIDE_CONSOLE) +
+		sizeof(HIDE_CONSOLE_WAIT) * (WaitsCount - 1)
+	);
+
+	if (!Result)
+	{
+		HideConsoleTraceLastError(L"HeapAlloc");
+		return NULL;
+	}
+
+	Result->WaitsCount = WaitsCount;
+	return Result;
+}
+
+static BOOL WINAPI FreeHideConsole(PHIDE_CONSOLE HideConsole)
+{
+	HideConsoleTrace(L"HideConsole=%1!p!", HideConsole);
+	HideConsoleAssert(HideConsole != NULL);
+
+	if (!HideConsole)
+	{
+		return FALSE;
+	}
+
+	HANDLE ProcessHeap = GetProcessHeap();
+
+	if (!ProcessHeap)
+	{
+		HideConsoleTraceLastError(L"GetProcessHeap");
+		return FALSE;
+	}
+
+	if (!HeapFree(ProcessHeap, 0, HideConsole))
+	{
+		HideConsoleTraceLastError(L"HeapFree");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL WINAPI UnregisterObjectWaits(PHIDE_CONSOLE HideConsole)
+{
+	HideConsoleTrace(L"HideConsole=%1!p!", HideConsole);
+	HideConsoleAssert(HideConsole != NULL);
+
+	if (!HideConsole)
+	{
+		return FALSE;
+	}
+
+	HideConsoleTrace(
+		L"HideConsole->WaitsCount=%1!u!",
+		HideConsole->WaitsCount
+	);
+
+	BOOL Result = TRUE;
+
+	for (DWORD Index = 0; Index < HideConsole->WaitsCount; Index++)
+	{
+		// Atomically replace the wait handle with NULL because another wait
+		// might complete too and we don't want to unregister the same wait
+		// twice.
+
+		HANDLE WaitHandle = InterlockedExchangePointer(
+			&HideConsole->Waits[Index].Wait,
+			NULL
+		);
+
+		// No need to replace the object handle. If we got the wait handle, we
+		// are both unregistering the wait and closing the object handle.
+
+		HANDLE ObjectHandle = HideConsole->Waits[Index].Object;
+
+		HideConsoleTrace(
+			L"[%1!u!]: WaitHandle=%2!p! ObjectHandle=%3!p!",
+			Index,
+			WaitHandle,
+			ObjectHandle
+		);
+
+		if (WaitHandle)
+		{
+			// INVALID_HANDLE_VALUE means block until the wait is unregistered
+
+			BOOL WaitUnregistered = UnregisterWaitEx(
+				WaitHandle,
+				INVALID_HANDLE_VALUE 
+			);
+
+			if (!WaitUnregistered)
+			{
+				HideConsoleTraceLastError(L"UnregisterWaitEx");
+				Result = FALSE;
+			}
+
+			if (!CloseHandle(ObjectHandle))
+			{
+				HideConsoleTraceLastError(L"CloseHandle");
+				Result = FALSE;
+			}
+		}
+	}
+
+	return Result;
+}
+
+//
+// Unregisters the waits, unhooks the hooks, and frees
+// the bookkeeping structure.
+//
+// Must not be called from the registered wait callback because 
+// UnregisterWaitEx waits for the callback to complete.
+//
+static VOID CALLBACK CleanupCallback(PTP_CALLBACK_INSTANCE Callback, PVOID Context)
 {
 	HideConsoleTrace(
-		L"Instance=%1!p! Context=%2!p!",
-		Instance,
+		L"Callback=%1!p! Context=%2!p!",
+		Callback,
 		Context
 	);
 
 	PHIDE_CONSOLE HideConsole = Context;
 
-	if (HideConsole->OurModuleHandle)
+	if (HideConsole->Module)
 	{
 		HideConsoleTrace(
 			L"FreeLibraryWhenCallbackReturns OurModuleHandle=%1!p!",
-			HideConsole->OurModuleHandle
+			HideConsole->Module
 		);
 
 		FreeLibraryWhenCallbackReturns(
-			Instance,
-			HideConsole->OurModuleHandle
+			Callback,
+			HideConsole->Module
 		);
 	}
 
-	if (HideConsole->ConhostWaitHandle)
-	{
-		HideConsoleTrace(L"UnregisterWaitEx (blocking)");
-
-		BOOL WaitUnregistered = UnregisterWaitEx(
-			HideConsole->ConhostWaitHandle,
-			INVALID_HANDLE_VALUE // block until the wait is unregistered
-		);
-
-		if (!WaitUnregistered)
-		{
-			HideConsoleTraceLastError(L"UnregisterWaitEx");
-		}
-	}
+	UnregisterObjectWaits(HideConsole);
 
 	BOOL WasLastHook = FALSE;
-	CleanupHideConsole(HideConsole, &WasLastHook);
+	UnhookHideConsole(&HideConsole->Hooks, &WasLastHook);
 
 	HWND WindowToBeClosed = g_WindowToBeClosed;
 
 	HideConsoleTrace(
-		L"WasLastHook=%1!u! WindowToBeClosed=%2!p!",
-		WasLastHook,
+		L"WasLastHook=%1 WindowToBeClosed=%2!p!",
+		WasLastHook ? L"TRUE" : L"FALSE",
 		WindowToBeClosed
 	);
 
 	if (WindowToBeClosed && WasLastHook)
 	{
-		HideConsoleTrace(L"Closing hWnd=%1!p!", WindowToBeClosed);
+		HideConsoleTrace(
+			L"PostMessageW WM_CLOSE hWnd=%1!p!",
+			WindowToBeClosed
+		);
 
 		if (!PostMessageW(WindowToBeClosed, WM_CLOSE, 0, 0))
 		{
 			HideConsoleTraceLastError(L"PostMessageW");
 		}
 	}
-
 }
 
-VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
+static VOID CALLBACK OnWaitCompleted(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 {
 	HideConsoleTrace(
 		L"Parameter=%1!p! TimerOrWaitFired=%2!u!",
@@ -91,9 +211,62 @@ VOID CALLBACK OnThreadExited(PVOID Parameter, BOOLEAN TimerOrWaitFired)
 	}
 }
 
-BOOL WINAPI EnableForWindow(HWND hWnd)
+static BOOL WINAPI RegisterThreadWait(
+	PHIDE_CONSOLE HideConsole,
+	DWORD Index,
+	DWORD ThreadId
+)
 {
-	HideConsoleTrace(L"hWnd=0x%1!p!", hWnd);
+	HideConsoleTrace(
+		L"HideConsole=%1!p! Index=%2!u! ThreadId=%3!u!",
+		HideConsole,
+		Index,
+		ThreadId
+	);
+
+	HideConsoleAssert(HideConsole != NULL);
+	HideConsoleAssert(ThreadId != 0);
+	HideConsoleAssert(Index < HideConsole->WaitsCount);
+
+	HideConsole->Waits[Index].Object = OpenThread(
+		SYNCHRONIZE,
+		FALSE,
+		ThreadId
+	);
+
+	if (!HideConsole->Waits[Index].Object)
+	{
+		HideConsoleTraceLastError(L"OpenThread");
+		return FALSE;
+	}
+
+	BOOL RegisteredWait = RegisterWaitForSingleObject(
+		&HideConsole->Waits[Index].Wait,
+		HideConsole->Waits[Index].Object,
+		OnWaitCompleted,
+		HideConsole,
+		INFINITE,
+		WT_EXECUTEONLYONCE
+	);
+
+	if (!RegisteredWait)
+	{
+		HideConsoleTraceLastError(L"RegisterWaitForSingleObject");
+
+		if (!CloseHandle(HideConsole->Waits[Index].Object))
+		{
+			HideConsoleTraceLastError(L"CloseHandle");
+		}
+
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL WINAPI EnableForWindowWithOwner(HWND hWnd, DWORD OwnerThreadId)
+{
+	HideConsoleTrace(L"hWnd=0x%1!p! OwnerThreadId=%2!u!", hWnd, OwnerThreadId);
 
 	if (!hWnd)
 	{
@@ -119,44 +292,64 @@ BOOL WINAPI EnableForWindow(HWND hWnd)
 
 #endif
 
-	PHIDE_CONSOLE HideConsole = SetupHideConsole(hWnd);
+	DWORD ThreadId = FindConhostUIThreadId(hWnd);
+
+	if (!ThreadId)
+	{
+		HideConsoleTrace(
+			L"Conhost UI thread for hWnd 0x%1!p! could not be found",
+			hWnd
+		);
+
+		return FALSE;
+	}
+
+	DWORD WaitsCount = (OwnerThreadId == 0) ? 1 : 2;
+
+	PHIDE_CONSOLE HideConsole = AllocHideConsole(WaitsCount);
 
 	if (!HideConsole)
 	{
 		return FALSE;
 	}
 
-	BOOL AddedModuleRef = GetModuleHandleExW(
-		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-		(LPCWSTR)EnableForWindow,
-		&HideConsole->OurModuleHandle
+	BOOL Success = SetHideConsoleHooks(
+		&HideConsole->Hooks,
+		ThreadId
 	);
 
-	if (!AddedModuleRef)
+	if (!Success)
 	{
-		HideConsoleTraceLastError(
-			L"GetModuleHandleExW"
-		);
-
 		goto Cleanup;
 	}
 
-	BOOL RegisteredWait = RegisterWaitForSingleObject(
-		&HideConsole->ConhostWaitHandle,
-		HideConsole->ConhostThreadHandle,
-		OnThreadExited,
-		HideConsole,
-		INFINITE,
-		WT_EXECUTEONLYONCE
+	Success = GetModuleHandleExW(
+		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+		(LPCWSTR)EnableForWindow,
+		&HideConsole->Module
 	);
 
-	if (!RegisteredWait)
+	if (!Success)
 	{
-		HideConsoleTraceLastError(
-			L"RegisterWaitForSingleObject"
-		);
-
+		HideConsoleTraceLastError(L"GetModuleHandleExW");
 		goto Cleanup;
+	}
+
+	HideConsoleTrace(L"Register Conhost UI thread wait");
+
+	if (!RegisterThreadWait(HideConsole, 0, ThreadId))
+	{
+		goto Cleanup;
+	}
+
+	if (OwnerThreadId)
+	{
+		HideConsoleTrace(L"Register owner thread wait");
+
+		if (!RegisterThreadWait(HideConsole, 1, OwnerThreadId))
+		{
+			goto Cleanup;
+		}
 	}
 
 	return TRUE;
@@ -167,22 +360,36 @@ Cleanup:
 	{
 		DWORD LastError = GetLastError();
 
-		if (HideConsole->OurModuleHandle)
+		UnhookHideConsole(&HideConsole->Hooks, NULL);
+
+		UnregisterObjectWaits(HideConsole);
+
+		if (HideConsole->Module)
 		{
 			HideConsoleTrace(L"Freeing our additional module handle");
 
-			if (!FreeLibrary(HideConsole->OurModuleHandle))
+			if (!FreeLibrary(HideConsole->Module))
 			{
 				HideConsoleTraceLastError(L"FreeLibrary");
 			}
 		}
 
-		CleanupHideConsole(HideConsole, NULL);
+		FreeHideConsole(HideConsole);
 
 		SetLastError(LastError);
 	}
 
 	return FALSE;
+}
+
+BOOL WINAPI EnableForWindow(HWND hWnd)
+{
+	HideConsoleTrace(L"hWnd=%1!p!", hWnd);
+
+	return EnableForWindowWithOwner(
+		hWnd,
+		GetCurrentThreadId()
+	);
 }
 
 BOOL WINAPI CloseWindowOnLastUnhook(HWND WindowToBeClosed)

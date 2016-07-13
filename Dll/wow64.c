@@ -9,7 +9,7 @@
 
 #ifndef _WIN64
 
-BOOL WINAPI GetModuleLastWriteTime(
+static BOOL WINAPI GetModuleLastWriteTime(
 	HMODULE ModuleHandle,
 	PFILETIME LastWriteTime
 )
@@ -70,7 +70,7 @@ BOOL WINAPI GetModuleLastWriteTime(
 	return Success;
 }
 
-BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
+static BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 {
 	DWORD TempPathLength = GetTempPathW(BufferCch, Buffer);
 
@@ -115,7 +115,7 @@ BOOL WINAPI EnsureHelperDirectory(LPWSTR Buffer, DWORD BufferCch)
 	return TRUE;
 }
 
-BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
+static BOOL WINAPI WriteRCDataToFile(HANDLE FileHandle, WORD ResourceId)
 {
 	HideConsoleTrace(
 		L"FileHandle=%1!p! ResourceId=%2!u!",
@@ -201,7 +201,7 @@ Cleanup:
 	return Success;
 }
 
-BOOL WINAPI EnsureHelperFile(
+static BOOL WINAPI EnsureHelperFile(
 	WORD    ResourceId,
 	LPCWSTR FileName,
 	LPWSTR  FilePath,
@@ -324,7 +324,7 @@ BOOL WINAPI EnsureHelperFile(
 	return Success;
 }
 
-BOOL WINAPI CreateHelperProcess(VOID)
+static BOOL WINAPI CreateHelperProcess(VOID)
 {
 	BOOL  Success;
 	WCHAR FilePath[MAX_PATH];
@@ -387,7 +387,7 @@ BOOL WINAPI CreateHelperProcess(VOID)
 	return Success;
 }
 
-BOOL WINAPI WaitForHelperReady(VOID)
+static BOOL WINAPI WaitForHelperReady(VOID)
 {
 	HANDLE ReadyEvent = CreateEventW(
 		/* lpEventAttributes */ NULL,
@@ -467,13 +467,17 @@ BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow)
 		return FALSE;
 	}
 
+	DWORD CurrentThreadId = GetCurrentThreadId();
+
+	HideConsoleTrace(L"CurrentThreadId=%1!u!", CurrentThreadId);
+
 	DWORD_PTR HelperResult = 0;
 
 	LRESULT Success = SendMessageTimeoutW(
 		MessageWindow,
 		WM_HIDE_CONSOLE,
 		(WPARAM)ConsoleWindow,
-		(LPARAM)0,
+		(LPARAM)CurrentThreadId,
 		SMTO_ABORTIFHUNG | SMTO_BLOCK | SMTO_ERRORONEXIT,
 		WOW64HELPER_SMTO_TIMEOUT,
 		&HelperResult

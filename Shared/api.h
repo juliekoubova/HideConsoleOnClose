@@ -34,8 +34,8 @@ HIDE_CONSOLE_HOOKS, *PHIDE_CONSOLE_HOOKS;
 
 typedef struct tagHIDE_CONSOLE_WAIT
 {
-	HANDLE Object;
-	HANDLE Wait;
+	HANDLE ObjectHandle;
+	HANDLE WaitHandle;
 }
 HIDE_CONSOLE_WAIT, *PHIDE_CONSOLE_WAIT;
 
@@ -45,7 +45,7 @@ typedef struct tagHIDE_CONSOLE
 	HIDE_CONSOLE_HOOKS Hooks;
 
 	DWORD              WaitsCount;
-	HIDE_CONSOLE_WAIT  Waits[1];
+	HIDE_CONSOLE_WAIT  Waits[0];
 }
 HIDE_CONSOLE, *PHIDE_CONSOLE;
 

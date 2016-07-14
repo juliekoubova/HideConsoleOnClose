@@ -33,6 +33,7 @@ static BOOL CALLBACK FindThreadId(HWND hWnd, LPARAM lParam)
 DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 {
 	HideConsoleTrace(L"hWnd=%1!p!", hWnd);
+	HideConsoleAssert(hWnd != NULL);
 
 	if (!hWnd)
 	{
@@ -63,7 +64,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 		goto Cleanup;
 	}
 
-#if _DEBUG
+#if HIDE_CONSOLE_TRACE
 	LARGE_INTEGER Frequency;
 	LARGE_INTEGER StartingTime;
 	LARGE_INTEGER EndingTime;
@@ -95,7 +96,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 
 	} while (Thread32Next(Snapshot, &ThreadEntry));
 
-#if defined(_DEBUG) && (HIDE_CONSOLE_TRACE)
+#if HIDE_CONSOLE_TRACE
 
 	QueryPerformanceCounter(&EndingTime);
 	ElapsedMilliseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
@@ -106,7 +107,7 @@ DWORD WINAPI FindConhostUIThreadId(HWND hWnd)
 		ElapsedMilliseconds.LowPart /= Frequency.LowPart;
 
 		HideConsoleTrace(
-			L"ThreadsEnumerated=%1!u! Elapsed=%2!u! ms Result=%3!u!",
+			L"ThreadsEnumerated=%1!u! Elapsed=%2!u!ms Result=%3!u!",
 			ThreadsEnumerated,
 			ElapsedMilliseconds.LowPart,
 			State.Result

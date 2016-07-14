@@ -11,7 +11,7 @@ VOID WINAPI  ImplHideConsoleTraceLastError(LPCWSTR Message);
 #define HideConsoleAssert(condition)                                          \
 	do                                                                        \
 	{                                                                         \
-		if (HIDE_CONSOLE_TRACE && !(condition))                               \
+		if (HIDE_CONSOLE_ASSERT && !(condition))                              \
 		{                                                                     \
 			ImplHideConsoleTrace(                                             \
 				HIDE_CONSOLE_TRACE_PREFIX                                     \

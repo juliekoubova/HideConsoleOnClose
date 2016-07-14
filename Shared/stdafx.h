@@ -1,9 +1,11 @@
 #pragma once
 
 #ifdef _DEBUG
-#  define HIDE_CONSOLE_TRACE 1
+#  define HIDE_CONSOLE_ASSERT 1
+#  define HIDE_CONSOLE_TRACE  1
 #else
-#  define HIDE_CONSOLE_TRACE 0
+#  define HIDE_CONSOLE_ASSERT 0
+#  define HIDE_CONSOLE_TRACE  0
 #endif
 
 // We need at least Windows 7, that's where conhost.exe was introduced.

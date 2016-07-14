@@ -7,23 +7,23 @@
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
-    <LinkIncremental>false</LinkIncremental>
-    <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <ExceptionHandling>false</ExceptionHandling>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <PreprocessorDefinitions>_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ExceptionHandling>false</ExceptionHandling>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <!--<PreprocessToFile>true</PreprocessToFile>-->
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -40,6 +40,9 @@
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
@@ -47,10 +50,15 @@
 
   <ItemDefinitionGroup Condition=" $(Configuration) == 'Release' ">
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>Full</Optimization>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
     </ClCompile>
+    <Link>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>

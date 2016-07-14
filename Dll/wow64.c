@@ -20,7 +20,10 @@ static BOOL WINAPI GetModuleLastWriteTime(
 		LastWriteTime
 	);
 
-	if (!ModuleHandle)
+	HideConsoleAssert(ModuleHandle != NULL);
+	HideConsoleAssert(LastWriteTime != NULL);
+
+	if (!ModuleHandle || !LastWriteTime)
 	{
 		return FALSE;
 	}
@@ -443,6 +446,13 @@ static BOOL WINAPI WaitForHelperReady(VOID)
 BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow)
 {
 	HideConsoleTrace(L"ConsoleWindow=%1!p!", ConsoleWindow);
+
+	HideConsoleAssert(ConsoleWindow != NULL);
+
+	if (!ConsoleWindow)
+	{
+		return FALSE;
+	}
 
 	if (!CreateHelperProcess())
 	{

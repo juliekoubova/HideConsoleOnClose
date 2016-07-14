@@ -28,11 +28,12 @@ static LRESULT WINAPI MessageWndProc(
 	if (Message == WM_CLOSE)
 	{
 		// Make sure we didn't set up any new hooks in between the last hook 
-		// cleanup and processing of this message.
+		// cleanup (which happens on a thread pool thread) and processing of
+		// this message.
 
 		if (GetHookCount())
 		{
-			HideConsoleTrace(L"WM_CLOSE: GetHookCount() != 0");
+			HideConsoleTrace(L"WM_CLOSE: GetHookCount() != 0, ignoring");
 		}
 		else
 		{

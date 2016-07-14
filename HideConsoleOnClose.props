@@ -7,7 +7,6 @@
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -19,11 +18,9 @@
       <PreprocessorDefinitions>_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
-      <!--<PreprocessToFile>true</PreprocessToFile>-->
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -48,6 +45,10 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
 
+  <PropertyGroup Condition=" $(Configuration) == 'Release' ">
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+
   <ItemDefinitionGroup Condition=" $(Configuration) == 'Release' ">
     <ClCompile>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -57,6 +58,7 @@
       <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
+      <OptimizeReferences>true</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <ResourceCompile>

@@ -8,32 +8,50 @@ namespace HideConsoleOnCloseManaged
         [DllImport("kernel32")]
         private static extern IntPtr GetConsoleWindow();
 
-        [DllImport("HideConsoleOnClose", EntryPoint = "EnableForWindow")]
+        [DllImport(
+            "HideConsoleOnClose",
+            EntryPoint = "EnableForWindow",
+            SetLastError = true
+        )]
         private static extern Boolean EnableForWindow32(IntPtr hWnd);
 
-        [DllImport("HideConsoleOnClose64", EntryPoint = "EnableForWindow")]
+        [DllImport(
+            "HideConsoleOnClose64",
+            EntryPoint = "EnableForWindow",
+            SetLastError = true
+        )]
         private static extern Boolean EnableForWindow64(IntPtr hWnd);
 
-        public static Boolean EnableForWindow(IntPtr hWnd)
+        public static void EnableForWindow(IntPtr hWnd)
         {
+            var success = false;
             if (IntPtr.Size == 4)
             {
-                return EnableForWindow32(hWnd);
+                success = EnableForWindow32(hWnd);
+            }
+            else
+            {
+                success = EnableForWindow64(hWnd);
             }
 
-            return EnableForWindow64(hWnd);
+            if (!success)
+            {
+                Marshal.ThrowExceptionForHR(
+                    Marshal.GetHRForLastWin32Error()
+                );
+            }
         }
 
-        public static Boolean Enable()
+        public static void Enable()
         {
             var hWnd = GetConsoleWindow();
 
-            if (hWnd != IntPtr.Zero)
+            if (hWnd == IntPtr.Zero)
             {
-                return EnableForWindow(hWnd);
+                throw new InvalidOperationException("The current process has no console window.");
             }
 
-            return false;
+            EnableForWindow(hWnd);
         }
     }
 }

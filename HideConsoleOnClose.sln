@@ -17,6 +17,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HideConsoleOnCloseWow64Helper", "Wow64Helper\Wow64Helper.vcxproj", "{E5119C22-54A4-4B3D-A35B-15A11E240556}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HideConsoleOnCloseManaged", "Managed\HideConsoleOnCloseManaged.csproj", "{647D82C5-4FAC-486C-9782-4FF2D0FBEC0A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9375C300-3AE2-4E66-84E5-EF36F5281691} = {9375C300-3AE2-4E66-84E5-EF36F5281691}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

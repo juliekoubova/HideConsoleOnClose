@@ -44,8 +44,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="BuildNativeDll" BeforeTargets="Build">
     <Message Importance="high" Text="Building HideConsoleOnClose64.dll..." />
-    <MSBuild Projects="$(SolutionDir)Dll\HideConsoleOnClose.vcxproj" Properties="Configuration=$(Configuration);Platform=x64" />
+    <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x64 &quot;/p:Configuration=$(Configuration)&quot; /v:m /nologo" />
     <Message Importance="high" Text="Building HideConsoleOnClose.dll..." />
-    <MSBuild Projects="$(SolutionDir)Dll\HideConsoleOnClose.vcxproj" Properties="Configuration=$(Configuration);Platform=Win32" />
+    <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x86 &quot;/p:Configuration=$(Configuration)&quot; /v:m /nologo" />
   </Target>
 </Project>

@@ -14,6 +14,13 @@ $HideConsoleOnClose = Add-Type `
 "@
 
 $Process = [Diagnostics.Process]::Start('cmd.exe')
+$Process.EnableRaisingEvents = $true
+
+$null = Register-ObjectEvent -InputObject $Process -EventName Exited -Action `
+{
+	Write-Host
+	Write-Host 'cmd.exe has exited'
+}
 
 Start-Sleep -Milliseconds 500
 

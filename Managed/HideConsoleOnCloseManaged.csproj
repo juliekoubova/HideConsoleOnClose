@@ -12,6 +12,9 @@
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <StartAction>Program</StartAction>
+    <StartProgram>$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe</StartProgram>
+    <StartArguments>-NoExit -Command "$(SolutionDir)Debug-Managed.ps1"</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,10 +45,25 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <NativeFile Include="$(SolutionDir)$(Configuration)\HideConsoleOnClose32.dll"/>
+    <NativeFile Include="$(SolutionDir)$(Configuration)\HideConsoleOnClose32.pdb"/>
+    <NativeFile Include="$(SolutionDir)x64\$(Configuration)\HideConsoleOnClose64.dll"/>
+    <NativeFile Include="$(SolutionDir)x64\$(Configuration)\HideConsoleOnClose64.pdb"/>
+  </ItemGroup>
   <Target Name="BuildNativeDll" BeforeTargets="Build">
     <Message Importance="high" Text="Building HideConsoleOnClose64.dll..." />
     <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x64 &quot;/p:Configuration=$(Configuration)&quot; /v:m /nologo" />
-    <Message Importance="high" Text="Building HideConsoleOnClose.dll..." />
+
+    <Message Importance="high" Text="Building HideConsoleOnClose32.dll..." />
     <Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(SolutionPath)&quot; /p:Platform=x86 &quot;/p:Configuration=$(Configuration)&quot; /v:m /nologo" />
+
+    <Message Importance="high" Text="Copying native DLLs and PDBs..." />
+    <Copy SourceFiles="@(NativeFile)" DestinationFolder="$(OutDir)" />
+  </Target>
+  <Target Name="BuildNuget" AfterTargets="Build">
+    <Message Importance="high" Text="Building NuGet package..."/>
+    <Exec WorkingDirectory="$(TargetDir)"
+          Command="&quot;$(SolutionDir)NuGet.exe&quot; pack &quot;$(MSBuildProjectFullPath)&quot; -Properties Configuration=$(Configuration) -Verbosity Quiet -NonInteractive" />
   </Target>
 </Project>

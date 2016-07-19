@@ -1,8 +1,4 @@
-$DllName = "HideConsoleOnClose"
-
-if ([IntPtr]::Size -eq 8) {
-	$DllName += '64'
-}
+$DllName = "HideConsoleOnClose$([IntPtr]::Size * 8)"
 
 $HideConsoleOnClose = Add-Type `
 	-PassThru `
@@ -16,8 +12,7 @@ $HideConsoleOnClose = Add-Type `
 $Process = [Diagnostics.Process]::Start('cmd.exe')
 $Process.EnableRaisingEvents = $true
 
-$null = Register-ObjectEvent -InputObject $Process -EventName Exited -Action `
-{
+$null = Register-ObjectEvent -InputObject $Process -EventName Exited -Action {
 	Write-Host
 	Write-Host 'cmd.exe has exited'
 }

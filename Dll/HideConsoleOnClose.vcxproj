@@ -45,9 +45,15 @@
     <ProjectGuid>{9375C300-3AE2-4E66-84E5-EF36F5281691}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <ProjectName>HideConsoleOnClose</ProjectName>
+    <TargetName>$(ProjectName)32</TargetName>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand>$(SystemRoot)\SysWow64\WindowsPowerShell\v1.0\powershell.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments> -NoExit -Command "$(SolutionDir)Debug.ps1"</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" $(Platform) == 'x64' ">
     <TargetName>$(ProjectName)64</TargetName>
+    <LocalDebuggerCommand>$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe</LocalDebuggerCommand>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="..\HideConsoleOnClose.props" />

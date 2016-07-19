@@ -13,7 +13,7 @@
   </metadata>
   <files>
     <file src="HideConsoleOnClose.targets" target="build\" />
-    <file src="..\$Configuration$\HideConsoleOnClose.dll" target="build\" />
+    <file src="..\$Configuration$\HideConsoleOnClose32.dll" target="build\" />
     <file src="..\x64\$Configuration$\HideConsoleOnClose64.dll" target="build\" />
   </files>
 </package>

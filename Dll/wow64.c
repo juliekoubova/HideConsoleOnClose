@@ -446,7 +446,6 @@ static BOOL WINAPI WaitForHelperReady(VOID)
 BOOL WINAPI SendWow64HelperMessage(HWND ConsoleWindow)
 {
 	HideConsoleTrace(L"ConsoleWindow=%1!p!", ConsoleWindow);
-
 	HideConsoleAssert(ConsoleWindow != NULL);
 
 	if (!ConsoleWindow)

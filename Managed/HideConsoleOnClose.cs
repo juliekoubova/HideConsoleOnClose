@@ -9,7 +9,7 @@ namespace HideConsoleOnCloseManaged
         private static extern IntPtr GetConsoleWindow();
 
         [DllImport(
-            "HideConsoleOnClose",
+            "HideConsoleOnClose32",
             EntryPoint = "EnableForWindow",
             SetLastError = true
         )]
@@ -24,7 +24,8 @@ namespace HideConsoleOnCloseManaged
 
         public static void EnableForWindow(IntPtr hWnd)
         {
-            var success = false;
+            Boolean success;
+
             if (IntPtr.Size == 4)
             {
                 success = EnableForWindow32(hWnd);
